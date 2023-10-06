@@ -1,0 +1,36 @@
+.td-label {
+    display: none;
+}
+@media (max-width: 768px) {
+    .desktop-mobile th {
+        display: none;
+    }
+    .desktop-mobile tr {
+        border-left: solid #4F4FD9 4px; 
+        border-bottom: solid white 30px; 
+    }
+    .desktop-mobile td {
+        display: block;
+        text-align: left !important;
+    }
+    .desktop-mobile td .td-label {
+        display: block;
+        text-align: right !important;
+        color: #DDD;
+        font-size: 0.7em;
+    }
+    .desktop {
+        display: none;
+    }
+}
+@media (min-width: 768px) {
+    .desktop-mobile td {
+        display: table-cell;
+    }
+    .desktop-mobile td .td-label {
+        display: none;
+    }
+    .mobile {
+        display: none;
+    }
+}

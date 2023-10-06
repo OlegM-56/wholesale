@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="generator" content="">
+    <title>Vue example</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <!-- Fonts -->
+    <link rel="stylesheet" href="/static/fonts/fontawesome/css/fontawesome-all.min.css" >
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+
+    <!-- Custom styles for this template -->
+    <link rel="stylesheet" type="text/css" href="/static/css/dashboard.css">
+
+    <style>
+      [v-cloak] { display: none; }
+
+      /* Fix Default style */
+      .md-dialog-overlay {
+        z-index: 1100 !important;
+      }
+      .md-dialog {
+        background: rgb(242, 243, 245);
+        box-shadow: 0 0 10px #000;
+        border-radius: 5px;
+        transition: none;
+        overflow-y: auto;
+        line-height: normal;
+        z-index: 1101 !important;;
+      }
+        
+      .md-menu-content {
+        background: #FFF;
+        z-index: 1102 !important;;
+        margin-top: 3em;
+      }
+
+      .md-menu-item :hover {
+        background: rgb(220, 220, 220);
+      }
+
+      .md-menu-content-container .md-menu-item .md-list-item-container .md-list-item-content {
+        font-size: 0.9em;
+      }
+
+      .md-menu-content-container .md-menu-item .md-list-item-container .md-list-item-content a:hover {
+        background: rgb(220, 220, 220);
+        word-wrap: break-word !important;
+      }
+      .md-datepicker-dialog {
+        z-index:1150 !important;
+      }
+
+      /* tag a without href */
+      a:not([href]):not([tabindex]) {
+        cursor: pointer;
+      }
+
+      .fa-icon {
+        font-size: 1.5rem;
+        font-weight: normal;
+      }
+
+      .fa-icon-900 {
+        font-size: 1.5rem;
+        font-weight: 900;
+      }
+
+      @media (min-width: 576px) {
+        .navbar-expand-sm .navbar-collapse {
+          display: none !important;
+        }
+      }
+
+    </style>
+
+    <link rel="stylesheet" type="text/css" href="/static/css/u-table.min.css">
+
+    <link rel="stylesheet" type="text/css" href="/static/vue/css/vue-notify.css">
+
+    <!-- jQuery -->
+    <script type="text/javascript" src="/static/js/jquery-3.4.1.slim.min.js"></script>
+
+    <!-- Vue JS-->
+    <script src="/static/vue/js/vue.min.js"></script>
+    <script src="/static/vue/js/vuex.min.js"></script>
+    <script src="/static/vue/js/vue-router.min.js"></script>
+
+    <!-- Vue Dialog Plugin -->
+    <!-- https://www.npmjs.com/package/vuejs-dialog -->
+    <!-- https://github.com/Godofbrowser/vuejs-dialog -->
+    <script src="/static/vue/js/vuejs-dialog.min.js"></script>
+    <script src="/static/vue/js/vuejs-dialog-mixin.min.js"></script>
+    <script>window.Vue.use(VuejsDialog.main.default)</script>
+    <link rel="stylesheet" type="text/css" href="/static/vue/css/vuejs-dialog.min.css">
+
+    <script src="/static/vue/js/vue-material.min.js"></script>
+    <script>Vue.use(VueMaterial.default)</script>
+    <link rel="stylesheet" type="text/css" href="/static/vue/css/vue-material.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/vue/css/vue-material-theme-default.css">
+
+     <link rel="stylesheet" type="text/css" href="/static/css/my-styles.css">
+
+  </head>
+  <body>
+    <div id="App">
+
+      <notification :items="notifications" delay="0" lifetime="3000" @ondismiss="onDismissNotify($event)"></notification>
+
+      <nav class="navbar navbar-expand-sm fixed-top navbar-dark bg-dark flex-md-nowrap p-0 shadow">
+        <h1 class="navbar-brand col-sm-3 col-md-2 m-0 d-none d-md-block"><a href="/">Vue example</a></h1>
+        <h2 class="navbar-brand col m-0" v-cloak>{{store.state.title}}</h2>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsMobile" aria-controls="navbarsMobile" aria-expanded="false" aria-label="Toggle menu">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse navbar-dark" id="navbarsMobile">
+          <app-menu version="mobile"></app-menu>
+        </div>
+      </nav>
+
+
+      <div class="container-fluid">
+        <div class="row">
+          <!-- MENU -->
+          <app-menu></app-menu>
+          <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <!-- ROUTER VIEW -->
+            <router-view />
+          </main>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- mixins file -->
+    <script src="/static/vue-app/app-mixins.js"></script>
+    <!-- components file -->
+    <script src="/static/vue-app/app-components.js"></script>
+    <!-- application file -->
+    <script src="/static/vue-app/app.js"></script>
+
+    <script type="text/javascript" src="/static/js/popper.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+
+  </body>
+</html>

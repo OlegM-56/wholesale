@@ -1,0 +1,9 @@
+/_______Vue/
+/___test_task/
+/__old/
+/Pipfile.lock
+/~$eateProjectFlask.docx
+/~WRL1271.tmp
+*.xml
+*.iml
+/.idea/.gitignore

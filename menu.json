@@ -1,0 +1,43 @@
+[
+    {
+    "section": "Документи",
+        "items": [
+            {
+                "item": "Seller",
+                "path": "#/seller"
+            }
+        ]
+    },
+
+    {
+    "section": "Довідники",
+        "items": [
+            {
+                "item": "Клієнти",
+                "path": "#/client"
+            },
+            {
+                "item": "Товари та послуги",
+                "path": "#/item"
+            }
+        ]
+    },
+
+    {
+    "section": "Інформація",
+       "items": [
+            {
+              "item": "Головна сторінка",
+              "path": "#/"
+            },
+            {
+              "item": "Формування бази даних",
+              "path": "#/database"
+            },
+            {
+              "item": "Опис виконання завдання",
+              "path": "#/implementation"
+            }
+       ]
+    }
+]
