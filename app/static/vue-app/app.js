@@ -75,6 +75,10 @@ const routes = [
     component: { template: '<item v-if="router.app.componentsReady(`item`)" />' },
     beforeEnter (to, from, next) { loadComponents("item.js"); next() }
   },
+  { path: '/item/:id',
+    component: { template: '<item-edit v-if="router.app.componentsReady(`item-edit`)" />' },
+    beforeEnter (to, from, next) { loadComponents("item.js"); next() }
+  },
 
 
    /* Документи */
@@ -100,6 +104,7 @@ const appDataset = {
         {name:'customer_name', 'title': 'Повна назва', type:'string', sort: true},
       ],
       'form': [
+        {name:'id', 'title': 'Код', type:'number', readonly:true},
         {name:'customer_name', 'title': 'Повна назва', type:'string', placeholder: 'Внесіть повну назву кліента', maxlength: 70, required: true},
         {name:'customer_address', 'title': 'Адреса клієнта', type:'string', placeholder: 'Внесить адресу кліента', maxlength: 100, required: true},
         {name:'phone', 'title': 'Контактний телефонPhone', type:'string', pattern: '\\(0\\d{2}\\)\\d{3}-\\d{2}-\\d{2}', placeholder: '(000)999-99-99'},

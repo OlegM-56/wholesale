@@ -92,7 +92,7 @@ Vue.component('form-field', {
   <input v-if="field.type=='url'" type="url" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
 
   <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
-  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder">
+  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
   <select v-if="field.type=='select'" :value="value" @change="$emit('input', $event.target.value)" class="form-control" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
 
   <div v-if="field.type=='checkbox'" class="form-check">
