@@ -1,20 +1,13 @@
-Vue.component('client', {
+Vue.component('balance-item', {
   mixins: [crud, crud_front],
   template: `
 <div>
-
-  <!-- <a href="#/client_old/">Previous version with dialog form</a> -->
-
   <div v-if="data">
-    <button @click="addRow()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
+    <!--  <button @click="addRow()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button> -->
     <standard-table
       perpage="10"
       :rows="data"
       :fields="appDataset[this.instance]['fields']['table']"
-      :actions="[
-          {name:'edit', caption:'', title: ' Edit', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900'},
-          {name:'delete', caption:'', title: 'Delete', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900'}
-      ]"
       perpage="10"
       @edit="editRow($event)"
       @delete="delete_front($event); form_data = null"
@@ -23,26 +16,28 @@ Vue.component('client', {
 </div>`
 ,
 mounted: function() {
-  store.commit('title', 'Client')
-  this.instance = 'client'
+  store.commit('title', 'Залишки по партіях')
+  this.instance = 'balance-item'
   this.instance_url = appDataset[this.instance]['url']
   this.read_front()
 },
 methods: {
   editRow: function (row) {
-    app.navigate('/client/' + row.id)
+    app.navigate('/balance-item/' + row.party_id)
   },
   addRow: function () {
-    app.navigate('/client/0')
+    app.navigate('/balance-item/0')
   }
 }
 })
 
-Vue.component('client-edit', {
+
+// ------- Редагування залишків по партіях ---------------
+Vue.component('balance-item-edit', {
   mixins: [crud],
   computed: {
-    ID: function () {
-      return app.getRouteParam('id')
+    PARTY_ID: function () {
+      return app.getRouteParam('party_id')
   }
   },
   template: `
@@ -63,14 +58,17 @@ Vue.component('client-edit', {
 </div>`
 ,
 mounted: function() {
-  store.commit('title', 'Редагування контрагента')
-  this.instance = 'client'
+  store.commit('title', 'Редагування залишків по партіях')
+  this.instance = 'balance-item'
   this.instance_url = appDataset[this.instance]['url']
+  this.pk = 'party_id'
+
+//  this.fetchUnits()
   this.init()
 },
 methods: {
   init: function () {
-    let row = {id: this.ID}
+    let row = {party_id: this.PARTY_ID}
     this.read_back(row, (response)=> {
         this.data = response
       },
@@ -82,10 +80,10 @@ methods: {
   doAction: function ($event) {
     if ($event.action.name == 'submit') {
       if ($event.valid == true) {
-        if (this.ID == 0) {
+        if (this.PARTY_ID == 0) {
           this.create_back(this.data, ()=>{
             app.notify({type: 'success', message: 'Created successfully'})
-            app.navigate('/client/')
+            app.navigate('/balance-item/')
           }, (errors)=> {
             this.show_error(errors)
           })
@@ -93,7 +91,7 @@ methods: {
         else {
           this.update_back(this.data, ()=>{
             app.notify({type: 'success', message: 'Saved successfully'})
-            app.navigate('/client/')
+            app.navigate('/balance-item/')
           }, (errors)=> {
             this.show_error(errors)
           })
@@ -104,20 +102,21 @@ methods: {
       }
     }
     if ($event.action.name == 'cancel') {
-      app.navigate('/client/')
+      app.navigate('/balance-item/')
     }
   },
   show_error: function(errors) {
     let message = errors.join('<br>')
     app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
-  }
+  },
+
 },
 watch: {
-  ID() {
+  PARTY_ID() {
     this.init()
   }
 }
 })
 
-app.componentsLoaded('client-edit')
-app.componentsLoaded('client')
+app.componentsLoaded('balance-item-edit')
+app.componentsLoaded('balance-item')

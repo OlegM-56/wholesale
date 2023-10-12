@@ -3,17 +3,16 @@
     "section": "Документи",
         "items": [
             {
-                "item": "Seller",
-                "path": "#/seller"
+              "item": "Залишки по партіях",
+              "path": "#/balance-item"
             }
         ]
     },
-
     {
     "section": "Довідники",
         "items": [
             {
-                "item": "Клієнти",
+                "item": "Контрагенти",
                 "path": "#/client"
             },
             {
@@ -27,7 +26,7 @@
     "section": "Інформація",
        "items": [
             {
-              "item": "Головна сторінка",
+              "item": "Постановка задачі",
               "path": "#/"
             },
             {

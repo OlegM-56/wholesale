@@ -25,6 +25,17 @@ mounted: function() {
   this.instance = 'item'
   this.instance_url = appDataset[this.instance]['url']
   this.read_front()
+//  data2 = this.data.map(item => {
+//            service_value = item.service ? "Так" : "";
+//            return {
+//                id: item.id,
+//                item_description: item.item_description,
+//                item_name: item.item_name,
+//                service: service_value,
+//                unit: item.unit
+//            };
+//        });
+//  this.data = data2;
 },
 methods: {
   editRow: function (row) {
@@ -36,6 +47,8 @@ methods: {
 }
 })
 
+
+// ------- Редагування товару ---------------
 Vue.component('item-edit', {
   mixins: [crud],
   computed: {
@@ -64,6 +77,7 @@ mounted: function() {
   store.commit('title', 'Редагування товару (послуги)')
   this.instance = 'item'
   this.instance_url = appDataset[this.instance]['url']
+  this.fetchUnits()
   this.init()
 },
 methods: {
@@ -108,7 +122,31 @@ methods: {
   show_error: function(errors) {
     let message = errors.join('<br>')
     app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
+  },
+    //  -------  Одиниці виміру ----------
+  fetchUnits() {
+    fetch('http://localhost:5000/unit/')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Помилка завантаження списку одиниць виміру');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Отримали список одиниць виміру , замінюємо ключі відповідно до форми компонента item
+        data2 = data.map(item => {
+            return {
+                value: item.unit_code,
+                caption: item.unit_name
+            };
+        });
+        appDataset[this.instance]['fields']['form'][2]['items'] = data2;
+      })
+      .catch(error => {
+        console.error('Помилка завантаження списку одиниць виміру', error);
+      });
   }
+
 },
 watch: {
   ID() {

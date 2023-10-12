@@ -46,6 +46,38 @@ const store = new Vuex.Store({
 
 /* ROUTES */
 const routes = [
+   /* Документи */
+  //  --- Залишки по партіях ---
+  { path: '/balance-item',
+    component: { template: '<balance-item v-if="router.app.componentsReady(`balance-item`)" />' },
+    beforeEnter (to, from, next) { loadComponents("balance-item.js"); next() }
+  },
+  { path: '/balance-item/:party_id',
+    component: { template: '<balance-item-edit v-if="router.app.componentsReady(`balance-item-edit`)" />' },
+    beforeEnter (to, from, next) { loadComponents("balance-item.js"); next() }
+  },
+
+   /* Довідники */
+  /* { path: '/client_old', component: { template: '<standard-page instance="client" title="Client" />' } }, */
+  //  --- Контрагенти ---
+  { path: '/client',
+    component: { template: '<client v-if="router.app.componentsReady(`client`)" />' },
+    beforeEnter (to, from, next) { loadComponents("client.js"); next() }
+  },
+  { path: '/client/:id',
+    component: { template: '<client-edit v-if="router.app.componentsReady(`client-edit`)" />' },
+    beforeEnter (to, from, next) { loadComponents("client.js"); next() }
+  },
+  //  --- Товари та послуги ---
+  { path: '/item',
+    component: { template: '<item v-if="router.app.componentsReady(`item`)" />' },
+    beforeEnter (to, from, next) { loadComponents("item.js"); next() }
+  },
+  { path: '/item/:id',
+    component: { template: '<item-edit v-if="router.app.componentsReady(`item-edit`)" />' },
+    beforeEnter (to, from, next) { loadComponents("item.js"); next() }
+  },
+
    /* Інформація */
   { path: '/',
     component: { template: '<main-page v-if="router.app.componentsReady(`main-page`)" />' },
@@ -59,30 +91,6 @@ const routes = [
     component: { template: '<implementation v-if="router.app.componentsReady(`implementation`)" />' },
     beforeEnter (to, from, next) { loadComponents("implementation.js"); next() }
   },
-
-   /* Довідники */
-
-  /* { path: '/client_old', component: { template: '<standard-page instance="client" title="Client" />' } }, */
-  { path: '/client',
-    component: { template: '<client v-if="router.app.componentsReady(`client`)" />' },
-    beforeEnter (to, from, next) { loadComponents("client.js"); next() }
-  },
-  { path: '/client/:id',
-    component: { template: '<client-edit v-if="router.app.componentsReady(`client-edit`)" />' },
-    beforeEnter (to, from, next) { loadComponents("client.js"); next() }
-  },
-  { path: '/item',
-    component: { template: '<item v-if="router.app.componentsReady(`item`)" />' },
-    beforeEnter (to, from, next) { loadComponents("item.js"); next() }
-  },
-  { path: '/item/:id',
-    component: { template: '<item-edit v-if="router.app.componentsReady(`item-edit`)" />' },
-    beforeEnter (to, from, next) { loadComponents("item.js"); next() }
-  },
-
-
-   /* Документи */
-  { path: '/seller', component: { template: '<standard-page instance="seller" title="Seller" />' } },
 ]
 
 const router = new VueRouter({routes})
@@ -127,7 +135,6 @@ const appDataset = {
     }
   },
 
-
   /* ---  Товари та послуги --- */
   'item': {
     'instance': 'item',
@@ -137,19 +144,36 @@ const appDataset = {
         {name:'id', 'title': 'Код', type:'number', sort: true},
         {name:'item_name', 'title': 'Назва', type:'string', sort: true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string', sort: false},
-        {name:'service', 'title': 'Послуга', type:'boolean', sort: true},
+        {name:'service', 'title': 'Послуга', type:'string', sort: true},
       ],
       'form': [
         {name:'id', 'title': 'Код', type:'number', readonly:true},
         {name:'item_name', 'title': 'Назва товару (послуги)', type:'string', maxlength: 50, required:true},
-        {name:'unit', 'title': 'Одиниця виміру', type:'select',
-              items:[{"value": "шт.", "caption": "штука"},
-                     {"value": "ящ.", "caption": "ящик"},
-                     {"value": "уп.", "caption": "упаковка"},
-                     {"value": "пар.","caption": "пара"}]
-         },
-        {name:'service', 'title': 'Послуга', type:'checkbox'},
-        {name:'item_name', 'title': 'Опис товару (послуги)', type:'string', maxlength: 150, required:false}
+        {name:'unit', 'title': 'Одиниця виміру', type:'select', items:[], required:true},
+        {name:'service', 'title': '', type:'radio', items:[{value:'', caption:'Товар'},{value:'Так', caption:'Послуга'}]},
+        {name:'item_description', 'title': 'Опис товару (послуги)', type:'string', maxlength: 150, required:false}
+      ]
+    }
+  },
+
+  /* ----- Залишки по партіях ------------  */
+  'balance-item': {
+    'instance': 'balance-item',
+    'url': 'http://localhost:5000/balance-item/',
+    'fields': {
+      'table': [
+        {name:'party_id', 'title': 'Код партії', type:'number'},
+        {name:'item', 'title': 'Назва товару', type:'string', sort:true},
+        {name:'date_receipt', 'title': 'Дата партії', type:'mydate', sort:true},
+        {name:'cost', 'title': 'Ціна закупки', type:'number', sort:false},
+        {name:'quantity', 'title': 'Залишок', type:'number', sort:false},
+      ],
+      'form': [
+        {name:'party_id', 'title': 'Код партії', type:'number', readonly:true},
+        {name:'item', 'title': 'Назва товару', type:'string', required:true},
+        {name:'date_receipt', 'title': 'Дата партії', type:'mydate', required:'required'},
+        {name:'cost', 'title': 'Ціна закупки', type:'number', required:true},
+        {name:'quantity', 'title': 'Залишок', type:'number', required:true},
       ]
     }
   },
@@ -232,9 +256,9 @@ var app = new Vue({
 
     confirm3btn: function (message, captions={}) {
       let btn_captions = {
-        'yes': 'Yes',
-        'no': 'No',
-        'cancel': 'Cancel'
+        'yes': 'Так',
+        'no': 'Ні',
+        'cancel': 'Скасувати'
       }
 
       btn_captions = Object.assign(btn_captions, captions)
@@ -259,8 +283,8 @@ var app = new Vue({
         animation: 'zoom',
         backdropClose: true,
         type: 'basic',
-        yesText: 'OK',
-        cancelText: 'Cancel',
+        yesText: 'Прийняти',
+        cancelText: 'Скасувати',
         value: value
       }
       return this.$dialog.alert(message, options)

@@ -1,11 +1,15 @@
+from flask_marshmallow.fields import fields
+from datetime import datetime
+
 from . import db, ma
 
-#===============================================================================
+# ===============================================================================
 # MENU
-#===============================================================================
+# ===============================================================================
 import os, json, codecs
 
-class Menu():
+
+class Menu:
     class query:
         @staticmethod
         def all():
@@ -15,7 +19,9 @@ class Menu():
                 with codecs.open(file_json, 'r', 'utf-8') as file_data:
                     menu = json.load(file_data)
             return menu
-#===============================================================================
+
+
+# ===============================================================================
 
 
 class Customer(db.Model):
@@ -28,10 +34,13 @@ class Customer(db.Model):
     def __repr__(self):
         return f"Customer {self.id}, {self.customer_name}"
 
+
 class CustomerSchema(ma.Schema):
     """ Customer_schema """
+
     class Meta:
         fields = ('id', 'customer_name', 'customer_address', 'phone')
+
 
 # Schema's initializing
 customer_schema = CustomerSchema()
@@ -46,10 +55,13 @@ class Unit(db.Model):
     def __repr__(self):
         return f"{self.unit_code} - {self.unit_name}"
 
+
 class UnitSchema(ma.Schema):
     """ schema """
+
     class Meta:
         fields = ('unit_code', 'unit_name')
+
 
 # Schema's initializing
 unit_schema = UnitSchema()
@@ -67,10 +79,16 @@ class Item(db.Model):
     def __repr__(self):
         return f"Item {self.id}, {self.item_name}"
 
+
 class ItemSchema(ma.Schema):
     """ Item_schema """
+
     class Meta:
         fields = ('id', 'item_name', 'unit', 'service', 'item_description')
+
+    service = fields.Function(
+        serialize=lambda obj: 'Так' if obj is not None and obj.service else '',
+        deserialize=lambda value: value == 'Так')
 
 # Schema's initializing
 item_schema = ItemSchema()
@@ -89,10 +107,13 @@ class Pinvoice(db.Model):
     def __repr__(self):
         return f"Pinvoice {self.num_doc} (self.custom_numdoc), {self.doc_date}"
 
+
 class PinvoiceSchema(ma.Schema):
     """ schema """
+
     class Meta:
         fields = ('num_doc', 'customer', 'doc_date', 'doc_status', 'doc_date_approve', 'custom_numdoc')
+
 
 # Schema's initializing
 pinvoice_schema = PinvoiceSchema()
@@ -112,10 +133,13 @@ class PinvoiceRow(db.Model):
     def __repr__(self):
         return f"Pinvoice_row Doc N {self.pinvoice}, npp {self.npp}"
 
+
 class PinvoiceRowSchema(ma.Schema):
     """ schema """
+
     class Meta:
         fields = ('id', 'pinvoice', 'npp', 'item', 'quantity', 'price')
+
 
 # Schema's initializing
 pinvoice_row_schema = PinvoiceRowSchema()
@@ -133,10 +157,13 @@ class Einvoice(db.Model):
     def __repr__(self):
         return f"Einvoice {self.num_doc}, {self.doc_date}"
 
+
 class EinvoiceSchema(ma.Schema):
     """ schema """
+
     class Meta:
         fields = ('num_doc', 'customer', 'doc_date', 'doc_status', 'doc_date_approve')
+
 
 # Schema's initializing
 einvoice_schema = EinvoiceSchema()
@@ -156,10 +183,13 @@ class EinvoiceRow(db.Model):
     def __repr__(self):
         return f"Einvoice_row Doc N {self.einvoice}, npp {self.npp}"
 
+
 class EinvoiceRowSchema(ma.Schema):
     """ schema """
+
     class Meta:
         fields = ('id', 'einvoice', 'npp', 'item', 'quantity', 'price')
+
 
 # Schema's initializing
 einvoice_row_schema = EinvoiceRowSchema()
@@ -177,10 +207,13 @@ class WarehouseOrderRow(db.Model):
     def __repr__(self):
         return f"Warehouse_order_row id {self.id}, einvoice_row {self.einvoice_row}"
 
+
 class WarehouseOrderRowSchema(ma.Schema):
     """ schema """
+
     class Meta:
         fields = ('id', 'einvoice', 'npp', 'item', 'quantity', 'price')
+
 
 # Schema's initializing
 warehouse_order_row_schema = WarehouseOrderRowSchema()
@@ -200,25 +233,22 @@ class BalanceItem(db.Model):
     def __repr__(self):
         return f"Balance_item {self.party_id}, item {self.item}"
 
+
 class BalanceItemSchema(ma.Schema):
     """ schema """
     class Meta:
-        fields = ('id', 'einvoice', 'npp', 'item', 'quantity', 'price')
+        fields = ('party_id', 'item', 'date_receipt', 'cost', 'quantity')
+
+    date_receipt = fields.Function(
+        # дата в строку
+        serialize=lambda obj: obj.date_receipt.strftime('%Y-%m-%d') if obj is not None else '',
+        # строка в дату
+        deserialize=lambda value: datetime.strptime(value, '%Y-%m-%d') if value else datetime(1900, 1, 1))
+
 
 # Schema's initializing
 balance_item_schema = BalanceItemSchema()
 balance_items_schema = BalanceItemSchema(many=True)
-
-
-
-
-
-
-
-
-
-
-
 
 """
     release_date = db.Column(db.Date, index=True, nullable=False)

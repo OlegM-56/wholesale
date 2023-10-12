@@ -44,7 +44,10 @@ var crud = {
     read_back: function (row, callbackOK, callbackError) {
       let url = this.instance_url
       if (row) {
-        url += row.id.toString() + '/'
+        if (this.pk)
+            url += row[this.pk].toString() + '/'
+        else
+            url += row.id.toString() + '/'
       }
       let options = {
         method: 'GET',
@@ -52,7 +55,11 @@ var crud = {
       this.fetch_execute(url, options, callbackOK, callbackError)
     },
     update_back: async function (row, callbackOK, callbackError) {
-      let url = this.instance_url + row.id.toString() + '/'
+      url = this.instance_url
+      if (this.pk)
+            url += row[this.pk].toString() + '/'
+      else
+         url += row.id.toString() + '/'
       let options = {
         method: 'PUT',
         headers: {
@@ -80,7 +87,7 @@ var crud_front = {
         create_front: function (row) {
             this.create_back(row, ()=> {
               this.read_front() // Reloads all data after creating one record... Not so good idea. But...
-              app.notify({type: 'success', message: 'Created successfully'})
+              app.notify({type: 'success', message: 'Успішно створено!'})  //Created successfully
             },
             (response)=> {
               this.show_error(response.errors)
@@ -113,7 +120,7 @@ var crud_front = {
           update_front: function (row) {
             this.update_back(row, ()=> {
                 this.read_front(row)
-                app.notify({type: 'success', message: 'Saved successfully'})
+                app.notify({type: 'success', message: 'Успішно збережено !'}) //Saved successfully
             },
             (response)=> {
               this.show_error(response.errors)
@@ -123,7 +130,7 @@ var crud_front = {
             app.confirm('Delete ?').then(()=> {
               this.delete_back(row, ()=> {
                 this.data.splice(this.data.indexOf(row), 1)
-                app.notify({type: 'success', message: 'Deleted successfully'})
+                app.notify({type: 'success', message: 'Успішно видалено !'})  //Deleted successfully
               },
               (response)=> {
                 this.show_error(response.errors)

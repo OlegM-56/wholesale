@@ -13,7 +13,6 @@ def serve_index():
     return send_from_directory('static','index.html')
     # return render_template('index.html')
 
-
 ##############################
 # Create
 ##############################
@@ -23,11 +22,12 @@ def create_data(model):
         model - модель/таблиця
         request.json - дані для нового запису
     """
-    print(request.json)
+    # Десеріалізуємо дані з JSON згідно схеми
+    dd = request.get_json()
+    request_data = Models[model]['schema'].load(request.get_json())
     # створюємо обєкт моделі
     try:
-        new_data = Models[model]['class'](**request.json)
-        print(new_data)
+        new_data = Models[model]['class'](**request_data)
     except Exception as e:
         # обробка помилки переданих даних
         print(str(e))
@@ -54,7 +54,6 @@ def get_data(model, pk=''):
         model - модель/таблиця
         pk - значення primary key  """
     data = None
-    print('get pk= ', pk)
     if model in Models:
         # ------- Видача одного запису ---------
         # пошук запису по primary key
@@ -94,6 +93,8 @@ def update_data(model, pk):
         request.json - дані для оновлення
     """
     print('pk= ', pk)
+    dd = request.get_json()
+    data_new = Models[model]['schema'].load(request.get_json())
     # пошук запису для оновлення
     data = Models[model]['class'].query.get(pk)
     if not data:
@@ -103,9 +104,17 @@ def update_data(model, pk):
     if 'update' in dir(Models[model]['class']):
         Models[model]['class'].update(data, request.json)
     else:
-        # дані з request.json копіюємо до відповідних атрибутів об'єкту data
-        for field in request.json:
-            setattr(data, field, request.json.get(field))
+        dd = request.get_json()
+        # Десеріалізуємо дані з JSON згідно схеми
+        # data_new = Models[model]['schema'].load(request.get_json())
+
+        # дані з item_data копіюємо до відповідних атрибутів об'єкту data
+        for field in data_new:
+            setattr(data, field, data_new[field])
+
+        # # дані з request.json копіюємо до відповідних атрибутів об'єкту data
+        # for field in request.json:
+        #     setattr(data, field, request.json.get(field))
 
     db.session.commit()
     # повертаємо відредагований обєкт
