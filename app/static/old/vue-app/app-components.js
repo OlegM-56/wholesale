@@ -89,10 +89,11 @@ Vue.component('form-field', {
   <input v-if="field.type=='tel'" type="tel" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
   <input v-if="field.type=='url'" type="url" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
 
-  <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
-  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder">
+  <input v-if="field.type=='mydate'" type="date" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :required="field.required" autocomplete="off">
 
-  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
+  <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
+  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
+  <select v-if="field.type=='select'" :value="value" @change="$emit('input', $event.target.value)" class="form-control" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
 
   <div v-if="field.type=='checkbox'" class="form-check">
     <input :checked="value == true" @change="$emit('input', $event.target.checked)" :id="'field_'+field.name" type="checkbox" class="form-check-input">
@@ -107,7 +108,8 @@ Vue.component('form-field', {
   </div>
 
   <!-- MD -->
-  <md-datepicker v-if="field.type=='date'" :value="value" @input="$emit('input', $event)" :md-open-on-focus="true" :md-immediately="true" :md-override-native="true" :required="field.required" />
+  <!-- <md-datepicker v-if="field.type=='date'" :value="value" @input="$emit('input', $event)" :md-open-on-focus="true" :md-immediately="true" :md-override-native="true" :required="field.required" />
+  -->
   <md-switch v-if="field.type=='switch'" v-model="value" @change="$emit('input', $event)">{{field.title}}</md-switch>
 
   <md-autocomplete v-if="field.type=='autocomplete'" :value="value" @input="$emit('input', $event)" :md-options="field.items" :required="field.required">
@@ -172,22 +174,25 @@ methods: {
 
 Vue.component('instance-page', {
   mixins: [crud, crud_front, crud_ext, paginator_server /*, paginator_local*/],
+  computed: {
+    param_instance() {
+      return this.getRouteParam('instance')
+    }
+  },
   template: `
 <div>
   <div v-if="data">
     <button @click="addRow()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
 
-    <table-menu
+    <table-menu @filter="search=$event"
+      @order="order($event.field, $event.type)"
       :sorting="sortFields"
       :orderField="orderField"
       :orderReverse="orderReverse"
-      @order="order($event.field, $event.type)"
-      :searchText="search"
-      @search="searchApply($event)"
     />
 
     <standard-table
-      :rows="data"
+      :rows="paginatedRows"
       :fields="fields"
       :current_row="current_row"
       :orderField="orderField"
@@ -209,6 +214,56 @@ Vue.component('instance-page', {
 
   </div>
 </div>`,
+  mounted: function() {
+    this.init()
+  },
+  methods: {
+    init: function() {
+      this.instance = this.param_instance
+      store.commit('title', appDataset[this.instance]['title'])
+      this.instance_url = appDataset[this.instance]['url']
+      if (appDataset[this.instance]['perpage']) {
+        this.perpage = appDataset[this.instance]['perpage']
+      }
+
+      this.read_front()
+
+      if (this.datasets) {
+        this.datasets_array = []
+        for (ext_data of this.datasets) {
+          this.read_ext_data(ext_data)
+          this.datasets_array.push(ext_data)
+        }
+      }
+    },
+    selectRow: function(row) {
+        this.current_row = row
+    },
+    addRow: function() {
+      app.navigate('/'+ this.instance + '/0')
+    },
+    editRow: function(row) {
+      app.navigate('/'+ this.instance +'/' + row.id)
+    },
+    setPage: function(page) {
+      let url = '/' + this.instance + '/page/' + page
+      app.navigate(url)
+    }, 
+    setPrevPage: function() {
+      this.setPage(this.paginator_page -1)
+    },
+    setNextPage: function() {
+      this.setPage(this.paginator_page +1)
+    },
+    getRouteParam: function (name) {
+      return this.$route.params[name]
+    },
+  },
+  watch: {
+    param_instance() {
+      this.init()
+    }
+  }
 })
 
 
@@ -278,7 +333,7 @@ methods: {
         }
       }
       else {
-        app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')
+        app.alert('Форма заповнена невірно!', '<i class="fas fa-times-circle text-danger"></i> Error')
       }
     }
     if ($event.action.name == 'cancel') {
@@ -403,7 +458,7 @@ Vue.component('header-order', {
 })
 
 Vue.component('table-menu', {
-  props: ['searchText', 'sorting', 'orderField', 'orderReverse', 'showReload'],
+  props: ['sorting', 'orderField', 'orderReverse', 'showReload'],
   data: function () {
     return {
       show: this.show,
@@ -420,13 +475,10 @@ Vue.component('table-menu', {
   <a @click="toggleShow()" title="Show/Hide">&#x2630;</a>&nbsp;<a v-if="showReload" @click="$emit('reload')" title="Reload (Alt+F5)"><span class="feather icon-refresh-cw"></span></a>
 
     <div class="row mr-3 mt-1 mb-1" v-if="show">
-      <div class="col-auto p-0">
-        <input type="text" class="form-control input-sm auto-width" maxlength="25" v-model="filter" @keyup="changeFilter()" @keyup.enter="search()" placeholder="search">
+      <div class="col-auto">
+        <input type="text" class="form-control input-sm auto-width" maxlength="25" v-model="filter" @keyup="changeFilter()" placeholder="search">
       </div>
-      <div class="col-auto p-0">
-        <button @click="search()" class="btn bt-sm"><i class="fas fa-search text-primary" title="Search"></a></button>
-      </div>
-      <div class="col p-0">
+      <div class="col">
         <md-menu v-if="sorting">
           <md-button md-menu-trigger class="text-left">
             <a>
@@ -435,7 +487,7 @@ Vue.component('table-menu', {
                 <span v-else>&#11015;</span>
                 {{sortCaption}}
               </small>
-              <span v-else title="Order by field">&#11014;&#11015;</span>
+              <span v-else title="Order by field">&#11014;&#11015;</span> 
             </a>
           </md-button>
 
@@ -448,9 +500,8 @@ Vue.component('table-menu', {
 
 </div>`,
 mounted: function() {
-  //this.filter = ''
-  this.show = (typeof this.searchText != 'undefined' & this.searchText !='')
-  this.filter = this.searchText
+  this.show = false
+  this.filter = ''
 },
 methods: {
   toggleShow: function () {
@@ -465,9 +516,6 @@ methods: {
   },
   changeOrder: function (item) {
     this.$emit('order', item)
-  },
-  search: function () {
-    this.$emit('search', this.filter)
   },
   findOf: function (obj, value, key, caption) {
     if ((obj == null) || (key == null) || (obj == value))

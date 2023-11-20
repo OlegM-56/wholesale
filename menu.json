@@ -5,9 +5,14 @@
             {
               "item": "Залишки по партіях",
               "path": "#/balance-item"
+            },
+            {
+              "item": "Прибуткові накладні",
+              "path": "#/pinvoice"
             }
         ]
     },
+
     {
     "section": "Довідники",
         "items": [

@@ -1,6 +1,8 @@
 from flask_marshmallow.fields import fields
 from datetime import datetime
 
+from sqlalchemy.orm import relationship
+
 from . import db, ma
 
 # ===============================================================================
@@ -29,7 +31,7 @@ class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     customer_name = db.Column(db.String(70), nullable=False)
     customer_address = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20), nullable=True)
+    phone = db.Column(db.String(20), nullable=True, default='')
 
     def __repr__(self):
         return f"Customer {self.id}, {self.customer_name}"
@@ -37,9 +39,15 @@ class Customer(db.Model):
 
 class CustomerSchema(ma.Schema):
     """ Customer_schema """
-
     class Meta:
         fields = ('id', 'customer_name', 'customer_address', 'phone')
+
+    phone = fields.Function(
+        # вывод данных
+        serialize=lambda obj: obj.phone if obj and obj.phone else '',
+        # ввод данных
+        deserialize=lambda value: value if value else ''
+    )
 
 
 # Schema's initializing
@@ -74,7 +82,7 @@ class Item(db.Model):
     item_name = db.Column(db.String(50), nullable=False)
     unit = db.Column(db.String(10), db.ForeignKey('unit.unit_code'), nullable=False)
     service = db.Column(db.Boolean, nullable=False, default=False)
-    item_description = db.Column(db.String(150))
+    item_description = db.Column(db.String(150), nullable=True)
 
     def __repr__(self):
         return f"Item {self.id}, {self.item_name}"
@@ -82,7 +90,6 @@ class Item(db.Model):
 
 class ItemSchema(ma.Schema):
     """ Item_schema """
-
     class Meta:
         fields = ('id', 'item_name', 'unit', 'service', 'item_description')
 
@@ -90,6 +97,12 @@ class ItemSchema(ma.Schema):
         serialize=lambda obj: 'Так' if obj is not None and obj.service else '',
         deserialize=lambda value: value == 'Так')
 
+    item_description = fields.Function(
+        # вывод данных
+        serialize=lambda obj: obj.item_description if obj is not None else '',
+        # ввод данных
+        deserialize=lambda value: value if value else ''
+    )
 # Schema's initializing
 item_schema = ItemSchema()
 items_schema = ItemSchema(many=True)
@@ -98,11 +111,12 @@ items_schema = ItemSchema(many=True)
 class Pinvoice(db.Model):
     """ --- Прибуткова накладна ---"""
     num_doc = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    customer = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id', name='fk_pinvoice_customer'), nullable=False)
+    customer = relationship('Customer', backref='pinvoice_customer')
     doc_date = db.Column(db.Date, nullable=False)
     doc_status = db.Column(db.Integer, nullable=False, default=0)
-    doc_date_approve = db.Column(db.Date)
-    custom_numdoc = db.Column(db.String(30))
+    doc_date_approve = db.Column(db.Date, nullable=True)
+    custom_numdoc = db.Column(db.String(30), nullable=True, default='')
 
     def __repr__(self):
         return f"Pinvoice {self.num_doc} (self.custom_numdoc), {self.doc_date}"
@@ -112,7 +126,24 @@ class PinvoiceSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('num_doc', 'customer', 'doc_date', 'doc_status', 'doc_date_approve', 'custom_numdoc')
+        fields = ('num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_date_approve', 'custom_numdoc')
+
+    doc_date = fields.Function(
+        # дата в строку
+        serialize=lambda obj: obj.doc_date.strftime('%Y-%m-%d') if obj and obj.doc_date else '',
+        # строка в дату
+        deserialize=lambda value: datetime.strptime(value, '%Y-%m-%d') if value else None
+    )
+    doc_date_approve = fields.Function(
+        # дата в строку
+        serialize=lambda obj: obj.doc_date_approve.strftime('%Y-%m-%d') if obj and obj.doc_date_approve else '',
+        # строка в дату
+        deserialize=lambda value: datetime.strptime(value, '%Y-%m-%d') if value else None
+    )
+    customer_name = fields.Function(
+        serialize=lambda obj: obj.customer.customer_name if obj is not None and obj.customer else '',
+        deserialize=lambda value: None
+    )
 
 
 # Schema's initializing
@@ -221,11 +252,12 @@ warehouse_order_rows_schema = WarehouseOrderRowSchema(many=True)
 
 
 class BalanceItem(db.Model):
-    """ --- Залишки товарів по партіях.
-            Партія =  код товару+дата приходу +ціна приходу ---"""
+    """ --- Залишки товарів по партіях. Партія =  код товару+дата приходу +ціна приходу ---"""
     __tablename__ = 'balance_item'
     party_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    item = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_balance_item'), nullable=False)
+    # Визначаємо відношення до моделі Item
+    item = relationship('Item', backref='balance_items')
     date_receipt = db.Column(db.Date, nullable=False)
     cost = db.Column(db.Float, nullable=False, default=0)
     quantity = db.Column(db.Float, nullable=False, default=0)
@@ -237,7 +269,7 @@ class BalanceItem(db.Model):
 class BalanceItemSchema(ma.Schema):
     """ schema """
     class Meta:
-        fields = ('party_id', 'item', 'date_receipt', 'cost', 'quantity')
+        fields = ('party_id', 'item_id', 'item_name', 'date_receipt', 'cost', 'quantity')
 
     date_receipt = fields.Function(
         # дата в строку
@@ -245,6 +277,12 @@ class BalanceItemSchema(ma.Schema):
         # строка в дату
         deserialize=lambda value: datetime.strptime(value, '%Y-%m-%d') if value else datetime(1900, 1, 1))
 
+    item_name = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.item_name if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
 
 # Schema's initializing
 balance_item_schema = BalanceItemSchema()

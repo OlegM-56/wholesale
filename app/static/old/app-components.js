@@ -4,6 +4,60 @@ Vue.component('v-style', {
   }
 });
 
+/*
+Vue.component('standard-table', {
+  mixins: [table],
+  props:['fields', 'actions', 'current_row'],
+  computed: {
+      sortFields: function () {
+          let fields = []
+          for (field of this.fields) {
+              if ( (typeof field.sort !== 'undefined') && (typeof field.name !== 'undefined') && (typeof field.title !== 'undefined') && (typeof field.type !== 'undefined') ){
+                  fields.push({field:field.name, caption:field.title, type:field.type})
+              }
+          }
+          return fields
+      }
+  },
+  template: `
+<div>
+  <table-menu @filter="search=$event"
+    @order="order($event.field, $event.type)"
+    :sorting="sortFields"
+    :orderField="orderField"
+    :orderReverse="orderReverse"
+  />
+
+  <u-table>
+  <u-tr>
+    <u-th v-for="field in fields">
+        <template v-if="field.sort">
+            <header-order :field="field.name" :orderField="orderField" :orderReverse="orderReverse" v-on:click="order($event, field.type)">{{field.title}}</header-order>
+        </template>
+        <template v-else>
+            {{field.title}}
+        </template>
+    </u-th>
+    <u-th v-if="actions">Action</u-th>
+  </u-tr>
+  <u-tr v-for="row in paginatedRows" @click="$emit('select', row)" :class="current_row==row?'bg-dark text-white':''">
+    <u-td v-for="field in fields" :label="field.title">{{row[field.name]}}</u-td>
+    <u-td v-if="actions">
+        <a v-for="action in actions" @click="doAction(action, row)" :title="action.title" class="mr-1"><span :class="action.class">{{action.caption}}</span></a>
+    </u-td>
+  </u-tr>
+  </u-table>
+  <paginator v-bind:pages="pages" gap="5" v-bind:currentPage="currentPage" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
+</div>
+`,
+methods: {
+  doAction: function (action, row) {
+    this.$emit(action.action, row)
+  }
+}
+})
+*/
+
 Vue.component('standard-table', {
   props:['rows', 'current_row', 'fields', 'orderField', 'orderReverse', 'search', 'actions'],
   template: `
@@ -89,13 +143,14 @@ Vue.component('form-field', {
   <input v-if="field.type=='tel'" type="tel" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
   <input v-if="field.type=='url'" type="url" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
 
-  <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
-  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder">
+  <input v-if="field.type=='mydate'" type="date" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :required="field.required" autocomplete="off">
 
-  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
+  <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
+  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
+  <select v-if="field.type=='select'" :value="value" @change="$emit('input', $event.target.value)" class="form-control" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
 
   <div v-if="field.type=='checkbox'" class="form-check">
-    <input :checked="value == true" @change="$emit('input', $event.target.checked)" :id="'field_'+field.name" type="checkbox" class="form-check-input">
+    <input :checked="value == true" @change="console.log($event.target.checked); $emit('input', $event.target.checked)" :id="'field_'+field.name" type="checkbox" class="form-check-input">
     <label :for="'field_'+field.name" class="form-check-label">{{field.title}}</label>
   </div>
 
@@ -107,7 +162,8 @@ Vue.component('form-field', {
   </div>
 
   <!-- MD -->
-  <md-datepicker v-if="field.type=='date'" :value="value" @input="$emit('input', $event)" :md-open-on-focus="true" :md-immediately="true" :md-override-native="true" :required="field.required" />
+  <!-- <md-datepicker v-if="field.type=='date'" :value="value" @input="$emit('input', $event)" :md-open-on-focus="true" :md-immediately="true" :md-override-native="true" :required="field.required" />
+  -->
   <md-switch v-if="field.type=='switch'" v-model="value" @change="$emit('input', $event)">{{field.title}}</md-switch>
 
   <md-autocomplete v-if="field.type=='autocomplete'" :value="value" @input="$emit('input', $event)" :md-options="field.items" :required="field.required">
@@ -132,15 +188,9 @@ methods: {
 
 Vue.component('standard-form', {
   props:['data', 'loading', 'fields', 'actions'],
-  data : function () {
-    return {
-      // For interactivity
-      form_fields: this.form_fields
-    }
-  },
   template: `
 <form name="dataForm" autocomplete="off">
-  <div class="form-group" v-for="field in form_fields">
+  <div class="form-group" v-for="field in fields">
     <label v-if="field.title && (['checkbox','switch','autocomplete','file'].indexOf(field.type)==-1)">{{field.title}}<sup v-if="field.required==true">*</sup></label>
     <form-field :field=field v-model="data[field.name]" :value=data[field.name] @keyEnter="submitForm(dataForm.checkValidity())" />
     <small v-if="field.help" class="form-text text-muted">{{field.help}}</small>
@@ -150,10 +200,6 @@ Vue.component('standard-form', {
   </div>
 </form>
 `,
-mounted: function() {
-  // For interactivity
-  this.form_fields = this.fields
-},
 methods: {
   submitForm: function(valid) {
     // Default action executed by press enter
@@ -170,24 +216,125 @@ methods: {
 }
 })
 
+/*
+Vue.component('standard-page', {
+  props:['instance', 'title'],
+  mixins: [crud, crud_front],
+  data: function () {
+    return {
+        current_row: this.current_row,
+        form_data: this.form_data
+    }
+  },
+  template: `
+<div>
+<v-style>
+.md-dialog {
+  width: auto;
+  overflow-y: auto;
+}
+</v-style>
+  <div v-if="data">
+    <button @click="form_data={}" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
+    <standard-table
+      perpage="10"
+      :rows="data"
+      :current_row="current_row"
+      :fields="appDataset[this.instance]['fields']['table']"
+      :actions="[
+          {name:'edit', caption:'', title: ' Edit', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900'},
+          {name:'delete', caption:'', title: 'Delete', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900'}
+      ]"
+      perpage="10"
+      @select="selectRow($event)"
+      @edit="editRow($event)"
+      @delete="delete_front($event); form_data = null"
+    />
+
+    <div v-if="form_data">
+      <md-dialog :md-active.sync="form_data" class="p-2 md-dialog">
+        <h2>{{title}}</h2>
+        <standard-form
+            :data="form_data"
+            :fields="appDataset[this.instance]['fields']['form']"
+            :actions="[
+                {name:'submit', title: 'Save', action: 'Save', class: '', dafault: true},
+                {name:'cancel', title: 'Cancel', action: 'Cancel', class: ''}
+            ]"
+            @action="doAction($event)"
+        />
+      </md-dialog>
+    </div>
+  </div>
+  <div v-else>
+    No data...
+  </div>
+</div>`,
+  mounted: function() {
+    store.commit('title', this.title)
+    this.instance_url = appDataset[this.instance]['url']
+    this.read_front()
+  },
+  methods: {
+    selectRow: function (row) {
+        this.current_row = row
+    },
+    editRow: function (row) {
+      this.current_row = row
+      this.read_back(row, (one_row) => {
+        this.form_data = one_row
+      })
+    },
+    doAction: function($event) {
+        if ($event.action.name == 'cancel') {
+            this.form_data = null
+        }
+        if ($event.action.name == 'submit') {
+            if ($event.valid == true) {
+              if ($event.row.id > 0) {
+                  // transfer data from form to current row
+                  // if we uses this.update_front($event.row) the row in table will not update
+                  for (key in $event.row) {
+                    this.current_row[key] = $event.row[key]
+                  }
+                  this.update_front(this.current_row)
+                  this.form_data = null
+              }
+              else {
+                  this.create_front($event.row)
+                  this.form_data = null
+              }
+            }
+            else {
+              app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')
+            }
+        }
+    }
+  }
+})
+*/
+
 Vue.component('instance-page', {
-  mixins: [crud, crud_front, crud_ext, paginator_server /*, paginator_local*/],
+  mixins: [crud, crud_front, crud_ext, paginator_local],
+  computed: {
+    param_instance() {
+      return this.getRouteParam('instance')
+    }
+  },
   template: `
 <div>
   <div v-if="data">
     <button @click="addRow()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
 
-    <table-menu
+    <table-menu @filter="search=$event"
+      @order="order($event.field, $event.type)"
       :sorting="sortFields"
       :orderField="orderField"
       :orderReverse="orderReverse"
-      @order="order($event.field, $event.type)"
-      :searchText="search"
-      @search="searchApply($event)"
     />
 
     <standard-table
-      :rows="data"
+      :rows="paginatedRows"
       :fields="fields"
       :current_row="current_row"
       :orderField="orderField"
@@ -209,6 +356,56 @@ Vue.component('instance-page', {
 
   </div>
 </div>`,
+  mounted: function() {
+    this.init()
+  },
+  methods: {
+    init: function() {
+      this.instance = this.param_instance
+      store.commit('title', appDataset[this.instance]['title'])
+      this.instance_url = appDataset[this.instance]['url']
+      if (appDataset[this.instance]['perpage']) {
+        this.perpage = appDataset[this.instance]['perpage']
+      }
+
+      this.read_front()
+
+      if (this.datasets) {
+        this.datasets_array = []
+        for (ext_data of this.datasets) {
+          this.read_ext_data(ext_data)
+          this.datasets_array.push(ext_data)
+        }
+      }
+    },
+    selectRow: function(row) {
+        this.current_row = row
+    },
+    addRow: function() {
+      app.navigate('/'+ this.instance + '/0')
+    },
+    editRow: function(row) {
+      app.navigate('/'+ this.instance +'/' + row.id)
+    },
+    setPage: function(page) {
+      let url = '/' + this.instance + '/page/' + page
+      app.navigate(url)
+    },
+    setPrevPage: function() {
+      this.setPage(this.paginator_page -1)
+    },
+    setNextPage: function() {
+      this.setPage(this.paginator_page +1)
+    },
+    getRouteParam: function (name) {
+      return this.$route.params[name]
+    },
+  },
+  watch: {
+    param_instance() {
+      this.init()
+    }
+  }
 })
 
 
@@ -403,7 +600,7 @@ Vue.component('header-order', {
 })
 
 Vue.component('table-menu', {
-  props: ['searchText', 'sorting', 'orderField', 'orderReverse', 'showReload'],
+  props: ['sorting', 'orderField', 'orderReverse', 'showReload'],
   data: function () {
     return {
       show: this.show,
@@ -420,13 +617,10 @@ Vue.component('table-menu', {
   <a @click="toggleShow()" title="Show/Hide">&#x2630;</a>&nbsp;<a v-if="showReload" @click="$emit('reload')" title="Reload (Alt+F5)"><span class="feather icon-refresh-cw"></span></a>
 
     <div class="row mr-3 mt-1 mb-1" v-if="show">
-      <div class="col-auto p-0">
-        <input type="text" class="form-control input-sm auto-width" maxlength="25" v-model="filter" @keyup="changeFilter()" @keyup.enter="search()" placeholder="search">
+      <div class="col-auto">
+        <input type="text" class="form-control input-sm auto-width" maxlength="25" v-model="filter" @keyup="changeFilter()" placeholder="search">
       </div>
-      <div class="col-auto p-0">
-        <button @click="search()" class="btn bt-sm"><i class="fas fa-search text-primary" title="Search"></a></button>
-      </div>
-      <div class="col p-0">
+      <div class="col">
         <md-menu v-if="sorting">
           <md-button md-menu-trigger class="text-left">
             <a>
@@ -435,7 +629,7 @@ Vue.component('table-menu', {
                 <span v-else>&#11015;</span>
                 {{sortCaption}}
               </small>
-              <span v-else title="Order by field">&#11014;&#11015;</span>
+              <span v-else title="Order by field">&#11014;&#11015;</span> 
             </a>
           </md-button>
 
@@ -448,9 +642,8 @@ Vue.component('table-menu', {
 
 </div>`,
 mounted: function() {
-  //this.filter = ''
-  this.show = (typeof this.searchText != 'undefined' & this.searchText !='')
-  this.filter = this.searchText
+  this.show = false
+  this.filter = ''
 },
 methods: {
   toggleShow: function () {
@@ -465,9 +658,6 @@ methods: {
   },
   changeOrder: function (item) {
     this.$emit('order', item)
-  },
-  search: function () {
-    this.$emit('search', this.filter)
   },
   findOf: function (obj, value, key, caption) {
     if ((obj == null) || (key == null) || (obj == value))
@@ -596,6 +786,13 @@ Vue.component('notification', {
 Vue.component('app-menu', {
   props:['version'],
   mixins:[crud, crud_front],
+  /*
+  data: function () {
+	return {
+		sections: this.sections
+  }
+  },
+  */
   template: `
 <span v-if="version=='mobile'">
   <ul class="navbar-nav mr-auto" v-for="section in data">
@@ -610,7 +807,7 @@ Vue.component('app-menu', {
     <div v-if="data" class="sidebar-sticky">
       <span v-for="section in data">
         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-          <span>{{section.section}}</span>
+          <span>*** {{section.section}} ***</span>
           <a class="d-flex align-items-center text-muted" href="#"></a>
         </h6>
         <ul class="nav flex-column">

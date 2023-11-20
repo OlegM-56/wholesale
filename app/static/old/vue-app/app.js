@@ -115,7 +115,6 @@ const appDataset = {
   'item': {
     'instance': 'item',
     'url': 'http://localhost:5000/item/',
-    'perpage': 5,
     'title': 'Товари та послуги',
     'fields': {
       'table': [
@@ -139,13 +138,10 @@ const appDataset = {
     'instance': 'balance-item',
     'url': 'http://localhost:5000/balance-item/',
     'title': 'Залишки по партіях',
-    'perpage': 2,
     'fields': {
       'table': [
         {name:'party_id', 'title': 'Код партії', type:'number'},
-        {name:'item_id', 'title': 'Код товару', type:'string', sort:true},
-        {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
-
+        {name:'item', 'title': 'Назва товару', type:'string', sort:true},
         {name:'date_receipt', 'title': 'Дата партії', type:'mydate', sort:true},
         {name:'cost', 'title': 'Ціна закупки', type:'number', sort:false},
         {name:'quantity', 'title': 'Залишок', type:'number', sort:false},
@@ -165,11 +161,10 @@ const appDataset = {
     'instance': 'pinvoice',
     'url': 'http://localhost:5000/pinvoice/',
     'title': 'Прибуткові накладні',
-    'perpage': 2,
     'fields': {
       'table': [
         {name:'num_doc', 'title': 'Номер документу', type:'number'},
-        {name:'customer_id', 'title': 'Код пстачальника', type:'string', sort:true},
+        {name:'customer', 'title': 'Код пстачальника', type:'string', sort:true},
         {name:'customer_name', 'title': 'Постачальник', type:'string', sort:true},
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', sort:true},
         {name:'doc_status', 'title': 'Статус', type:'number', sort:true},

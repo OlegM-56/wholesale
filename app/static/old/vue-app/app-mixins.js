@@ -3,12 +3,7 @@ var crud = {
     return {
       data: this.data,
       instance: this.instance,
-      instance_url: this.instance_url,
-
-      instance_search: this.instance_search,
-      instance_order: this.instance_order,
-      instance_paginator: this.instance_paginator,
-      data_rows_count: this.data_rows_count
+      instance_url: this.instance_url
     }
   },
   methods: {
@@ -48,25 +43,11 @@ var crud = {
     },
     read_back: function (row, callbackOK, callbackError) {
       let url = this.instance_url
-/// new
-      let data = {}
-      if (typeof this.instance_search != 'undefined'){
-        Object.assign(data, this.instance_search)
-      }
-      if (typeof this.instance_order != 'undefined'){
-        Object.assign(data, this.instance_order)
-      }
-      if (typeof this.instance_paginator != 'undefined'){
-        Object.assign(data, this.instance_paginator)
-      }
-      let params = JSON.stringify(data)
-      if (params != '{}') {
-        url += params
-      }
-///
-
       if (row) {
-        url += row.id.toString() + '/'
+        if (this.pk)
+            url += row[this.pk].toString() + '/'
+        else
+            url += row.id.toString() + '/'
       }
       let options = {
         method: 'GET',
@@ -74,7 +55,11 @@ var crud = {
       this.fetch_execute(url, options, callbackOK, callbackError)
     },
     update_back: async function (row, callbackOK, callbackError) {
-      let url = this.instance_url + row.id.toString() + '/'
+      url = this.instance_url
+      if (this.pk)
+            url += row[this.pk].toString() + '/'
+      else
+         url += row.id.toString() + '/'
       let options = {
         method: 'PUT',
         headers: {
@@ -102,7 +87,7 @@ var crud_front = {
         create_front: function (row) {
             this.create_back(row, ()=> {
               this.read_front() // Reloads all data after creating one record... Not so good idea. But...
-              app.notify({type: 'success', message: 'Created successfully'})
+              app.notify({type: 'success', message: 'Успішно створено!'})  //Created successfully
             },
             (response)=> {
               this.show_error(response.errors)
@@ -124,15 +109,6 @@ var crud_front = {
                 else {
                   // update data
                   this.data = response
-
-                  ///////// new
-                  // get _total_records_ and Remove record with _total_records_ from data
-                  this.data_rows_count = this.data.length
-                  if (typeof this.data[this.data.length-1]['_total_records_'] != 'undefined') {
-                    this.data_rows_count = this.data[this.data.length-1]['_total_records_']
-                    this.data = this.data.slice(0, this.data.length-1)
-                  }
-                  /////////
                 }
               }
             },
@@ -140,10 +116,11 @@ var crud_front = {
               this.show_error(response.errors)
             })
           },
+
           update_front: function (row) {
             this.update_back(row, ()=> {
                 this.read_front(row)
-                app.notify({type: 'success', message: 'Saved successfully'})
+                app.notify({type: 'success', message: 'Успішно збережено !'}) //Saved successfully
             },
             (response)=> {
               this.show_error(response.errors)
@@ -153,7 +130,7 @@ var crud_front = {
             app.confirm('Delete ?').then(()=> {
               this.delete_back(row, ()=> {
                 this.data.splice(this.data.indexOf(row), 1)
-                app.notify({type: 'success', message: 'Deleted successfully'})
+                app.notify({type: 'success', message: 'Успішно видалено !'})  //Deleted successfully
               },
               (response)=> {
                 this.show_error(response.errors)
@@ -168,6 +145,7 @@ var crud_front = {
     }
 }
 
+/* new */
 var crud_ext = {
   data : function () {
     return {
@@ -241,7 +219,12 @@ var paginator_local = {
   },
   computed: {
     paginator_pages() {
+      // Это при постраничке с сервера
+      //return Math.ceil(this.data_rows_count/this.perpage)
+
+      // Это при локальной постраничке
       return Math.ceil(this.filteredRows.length/this.perpage)
+
     },
     paginator_page() {
       let page = app.getRouteParam('page')
@@ -439,9 +422,8 @@ var paginator_server = {
   computed: {
     prm: function() {
       try {
-         return JSON.parse(decodeURIComponent(atob(this.getRouteParam('prm'))))
-           //         return JSON.parse(this.getRouteParam('prm'))
-            // return JSON.parse(atob(this.getRouteParam('prm')))
+        //return JSON.parse(this.getRouteParam('prm'))
+        return JSON.parse(atob(this.getRouteParam('prm')))
       }
       catch (e) {
         return null
@@ -452,9 +434,8 @@ var paginator_server = {
       obj['paginator'] = this.instance_paginator['paginator']
       obj['order'] = this.instance_order['order']
       obj['search'] = this.instance_search['search']
-      return btoa(encodeURIComponent(JSON.stringify(obj)))
-            //      return JSON.stringify(obj)
-            //      return btoa(JSON.stringify(obj))
+      //return JSON.stringify(obj)
+      return btoa(JSON.stringify(obj))
     },
     param_instance() {
       return this.getRouteParam('instance')
