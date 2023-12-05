@@ -93,6 +93,20 @@ var crud = {
       this.fetch_execute(url, options, callbackOK, callbackError)
     },
 
+        // ---------- Проведення накладної -----
+    confirm_back: async function (row, callbackOK, callbackError) {
+      let url = this.instance_url
+      url += this.ID + '/'
+      let options = {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(row)
+      }
+      this.fetch_execute(url, options, callbackOK, callbackError)
+    },
+
         // ---------- delete -----
     delete_back: async function (row, url_detail, callbackOK, callbackError) {
       let url = (url_detail) ? url_detail : this.instance_url
@@ -849,6 +863,7 @@ var edit_invoce = {
     doAction: function ($event) {
       if ($event.action.name == 'submit') {
         if ($event.valid == true) {
+          //  ----  створення накладної ---
           if (this.ID == 0) {
             this.create_back(this.data, (response)=> {
               app.notify({type: 'success', message: 'Документ створено'})
@@ -858,24 +873,39 @@ var edit_invoce = {
             })
           }
           else {
-            this.update_back(this.data, ()=> {
+            //  ----  коригування накладної ---
+            this.update_back(this.data,
+            (response)=> {
+              this.data = response
               app.notify({type: 'success', message: 'Зміни в документі збережено'})
-//              this.$router.go(-1)
-            }, (errors)=> {
+            },
+            (errors)=> {
               this.show_error(errors)
             })
+            this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
           }
         }
         else {
           app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')
         }
       }
+       //  --- Повернутися до списку без збереження змін
       if ($event.action.name == 'cancel') {
-//        this.$router.go(-1)
+            //       this.$router.go(-1)
         this.$router.push('/'+ this.instance)
       }
+       //  --- Проведення накладної
       if ($event.action.name == 'confirm') {
-        this.$router.push('/'+ this.instance)
+        //  this.$router.push('/'+ this.instance)
+        this.confirm_back(this.data,
+        (response)=> {
+          this.data = response
+          app.notify({type: 'success', message: 'Документ проведено'})
+        },
+        (errors)=> {
+          this.show_error(errors)
+        })
+        this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
       }
     },
     // --------- ПОМИЛКИ ------

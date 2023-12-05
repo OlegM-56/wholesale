@@ -1,5 +1,5 @@
 from flask_marshmallow.fields import fields
-from datetime import datetime
+from datetime import datetime, date
 
 from sqlalchemy.orm import relationship
 
@@ -198,6 +198,25 @@ class Pinvoice(db.Model):
         except Exception as e:
             print('error"', str(e))
             return False
+
+    @staticmethod
+    def confirm(data):
+        """ метод для проведення накладної """
+        try:
+            # data - документ Pinvoice для проведення
+            data.doc_date_approve = date.today()
+            data.doc_status = 1
+            # # Видаляємо всі рядки документу Pinvoice
+            # PinvoiceRow.query.filter_by(pinvoice_id=row.num_doc).delete()
+            # # Видаляємо сам документ Pinvoice
+            # db.session.delete(row)
+            # # Зберігаємо зміни в базі даних
+            # db.session.commit()
+            return True
+        except Exception as e:
+            print('error"', str(e))
+            return False
+
 
 class PinvoiceSchema(ma.Schema):
     """ schema """

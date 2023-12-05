@@ -321,6 +321,45 @@ def delete_data(model, pk):
 
 
 ##############################
+#  Проведення документу
+##############################
+@app.route('/<string:model>/<pk>/', methods=['PATCH'])
+def confirm_doc(model, pk):
+    """ --- Проведення документу:
+        виконання певніх дій (коригування залишків, тощо для будь-якої моделі (таблиці) ---
+        model - модель/таблиця
+        pk - значення primary key запису
+        request.json - дані для обробки
+    """
+    #  -- якщо не існує метод з іменем "confirm" у класі, то виходимо з помилкою
+    if 'confirm' not in dir(Models[model]['class']):
+        return jsonify([{'error': f"Немає методу проведення документу для моделі {model} !"}]), 404
+
+    #  -- якщо існує метод з іменем "confirm" у класі, то виконуємо
+    data_json = request.get_json()
+    if not data_json:
+        return jsonify([{'error': f"Дані для обробки запису з pk={pk} в моделі {model} не передано!"}]), 404
+    # пошук запису для оновлення
+    data = Models[model]['class'].query.get(pk)
+    if not data:
+        return jsonify([{'error': f"Запис з pk={pk} в моделі {model} не знайдено!"}]), 404
+    try:
+        # запускаємо проведення
+        Models[model]['class'].confirm(data)
+        db.session.commit()
+        # повертаємо відредагований обєкт
+        return Models[model]['schema'].jsonify(data), 200
+    except Exception as e:
+        # Відкат у випадку помилки
+        db.session.rollback()
+        print(f"Помилка: {e}")
+        return jsonify([{'error': f"Помилка коригування запису з pk={pk} в моделі {model}!"}]), 500
+
+
+
+
+
+##############################
 # Заповнення бази
 ##############################
 # @app.route('/add_data/<string:model>/')

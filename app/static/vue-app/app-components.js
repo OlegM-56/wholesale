@@ -283,7 +283,7 @@ Vue.component('invoce-edit', {
       :actions="[
           {name:'submit', title: 'Зберегти', action: 'Save', class: '', dafault: true},
           {name:'cancel', title: 'Cancel', action: 'Cancel', class: ''},
-          {name:'confirm', title: 'Провести документ', action: 'confirm', class: '', disabled: true}
+          {name:'confirm', title: 'Провести документ', action: 'confirm', class: '', disabled: false}
       ]"
       @action="doAction($event)"
     />
