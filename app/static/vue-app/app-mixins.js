@@ -1,3 +1,4 @@
+// ===========  BACK  CRUD ==================
 var crud = {
   data : function () {
     return {
@@ -29,12 +30,13 @@ var crud = {
       }
       catch (error) {
         if (callbackError) {
-          callbackError({'errors':[error]})
+          callbackError({ 'errors': [`${error.name}: ${error.message}`] });
         }
       }
       finally {
       }
     },
+         // ---------- CREATE -----
     create_back: function (row, callbackOK, callbackError) {
       let url = this.instance_url
       let options = {
@@ -46,8 +48,15 @@ var crud = {
       }
       this.fetch_execute(url, options, callbackOK, callbackError)
     },
+
+        // ---------- READ -----
     read_back: function (row, callbackOK, callbackError) {
       let url = this.instance_url
+      if (row) {
+        url += this.ID + '/'  //row.id.toString() + '/'
+      } else {
+        url += '00/'
+      }
 /// new
       let data = {}
       if (typeof this.instance_search != 'undefined'){
@@ -64,17 +73,16 @@ var crud = {
         url += params
       }
 ///
-
-      if (row) {
-        url += row.id.toString() + '/'
-      }
       let options = {
         method: 'GET',
       }
       this.fetch_execute(url, options, callbackOK, callbackError)
     },
+
+        // ---------- update -----
     update_back: async function (row, callbackOK, callbackError) {
-      let url = this.instance_url + row.id.toString() + '/'
+      let url = this.instance_url
+      url += this.ID + '/'
       let options = {
         method: 'PUT',
         headers: {
@@ -84,8 +92,11 @@ var crud = {
       }
       this.fetch_execute(url, options, callbackOK, callbackError)
     },
-    delete_back: async function (row, callbackOK, callbackError) {
-      let url = this.instance_url + row.id.toString() + '/'
+
+        // ---------- delete -----
+    delete_back: async function (row, url_detail, callbackOK, callbackError) {
+      let url = (url_detail) ? url_detail : this.instance_url
+      url += this.name_id ? row[this.name_id] : row.id + '/'
       let options = {
         method: 'DELETE',
         headers: {
@@ -97,18 +108,22 @@ var crud = {
   }
 }
 
+// ===========  FRONT  CRUD ==================
 var crud_front = {
     methods: {
+         // ---------- CREATE -----
         create_front: function (row) {
-            this.create_back(row, ()=> {
+            this.create_back(row, (response)=> {
+              this.data = response
               this.read_front() // Reloads all data after creating one record... Not so good idea. But...
-              app.notify({type: 'success', message: 'Created successfully'})
+              app.notify({type: 'success', message: 'Успішно створено!'})
             },
             (response)=> {
               this.show_error(response.errors)
             })
           },
 
+         // ---------- READ -----
           read_front: function (row) {
             this.read_back(row, (response)=> {
               if ('errors' in response) {
@@ -140,20 +155,24 @@ var crud_front = {
               this.show_error(response.errors)
             })
           },
+
+         // ---------- UPDATE -----
           update_front: function (row) {
             this.update_back(row, ()=> {
                 this.read_front(row)
-                app.notify({type: 'success', message: 'Saved successfully'})
+                app.notify({type: 'success', message: 'Успішно збережено !'})
             },
             (response)=> {
               this.show_error(response.errors)
             })
           },
+
+         // ---------- DELETE -----
           delete_front: function (row) {
-            app.confirm('Delete ?').then(()=> {
-              this.delete_back(row, ()=> {
+            app.confirm('Видалити запис ?').then(()=> {
+              this.delete_back(row, '', ()=> {
                 this.data.splice(this.data.indexOf(row), 1)
-                app.notify({type: 'success', message: 'Deleted successfully'})
+                app.notify({type: 'success', message: 'Успішно видалено !'})
               },
               (response)=> {
                 this.show_error(response.errors)
@@ -168,6 +187,7 @@ var crud_front = {
     }
 }
 
+// ===========  FRONT  EXT ==================
 var crud_ext = {
   data : function () {
     return {
@@ -227,7 +247,65 @@ var crud_ext = {
   }
 }
 
+// ===========  FRONT  DETAIL ==================
+var crud_detail = {
+  data : function () {
+    return {
+      detail_data: this.detail_data
+    }
+  },
+  computed: {
+  },
+  mounted: function() {
+    this.detail_data = []
+  },
+  methods: {
+      // --- завантаження даних по рядкам накладної
+    load_detail_data: function(row) {
+       //  модель рядків
+       let instance_detail = appDataset[this.instance]['instance_detail']
+       //  поля для таблиці рядків
+       this.detail_fields = appDataset[instance_detail]['fields']['table']
+       //   якщо існує накладна
+       if ( row.id > 0 ) {
+          //  запит даних
+          let field_main_id = appDataset[instance_detail]['main_id']  //  поле заголовка накладної
+          let url = appDataset[instance_detail]['url'] + '00/{"details":{"field":"'+ field_main_id +'","value":' + row.id.toString()+ '}, "order":["npp"]}'
+          let options = {method: 'GET'}
+          this.fetch_execute(url, options,
+             (result) => {
+                if (result) {
+                  this.detail_data = result
+                  this.detail_data = this.detail_data.slice(0, this.detail_data.length-1)
+                } else {
+                  console.error('Invalid response:', response);
+                }
+            },
+            (response) => {
+              this.show_error(response.errors)
+            }
+          )
+       }
+    },
+    // ---------- Видалення рядка накладної -----
+    delete_detail_data: function (row) {
+        app.confirm('Видалити рядок ?').then(()=> {
+          url_detail = appDataset[this.instance_detail]['url']
+          this.delete_back(row, url_detail, ()=> {
+            this.detail_data.splice(this.detail_data.indexOf(row), 1)
+            app.notify({type: 'success', message: 'Рядок успішно видалено !'})
+          },
+          (response)=> {
+            this.show_error(response.errors)
+          });
+        }).catch( function () {
+        })
+      },
 
+  }
+}
+
+// ===========  PAGINATOR LOCAL ==================
 var paginator_local = {
   data: function () {
     return {
@@ -426,7 +504,7 @@ var paginator_local = {
 
 }
 
-
+// ===========  PAGINATOR SERVER ==================
 var paginator_server = {
   data: function () {
     return {
@@ -436,6 +514,7 @@ var paginator_server = {
       current_row: this.current_row
     }
   },
+
   computed: {
     prm: function() {
       try {
@@ -484,8 +563,16 @@ var paginator_server = {
         return 1
       }
     },
+    //   назва поля первинного ключа Моделі
+    name_id: function () {
+        if (appDataset[this.instance]['pk'])
+            return appDataset[this.instance]['pk']
+        else
+            return 'id'
+    },
 
   },
+
   mounted: function() {
     this.orderField = ''
     this.orderReverse = false
@@ -572,7 +659,8 @@ var paginator_server = {
       this.search = searchText
       let searchArray = []
       for (let field of this.fields) {
-        searchArray.push({'field': field.name, 'value': this.search, 'operator': 'LIKE'})
+        searchArray.push({'field': field.name, 'value': this.search})
+        // searchArray.push({'field': field.name, 'value': this.search, 'operator': 'LIKE'})
       }
       this.instance_search = {"search":searchArray}
       this.instance_paginator['paginator']['page'] = 1
@@ -583,10 +671,16 @@ var paginator_server = {
         this.current_row = row
     },
     addRow: function() {
-      app.navigate('/'+ this.instance + '/0')
+      if (this.instance.includes('invoice'))
+        app.navigate('/invoice/'+ this.instance +'/0')
+      else
+        app.navigate('/'+ this.instance + '/0')
     },
     editRow: function(row) {
-      app.navigate('/'+ this.instance +'/' + row.id)
+      if (this.instance.includes('invoice'))
+        app.navigate('/invoice/'+ this.instance +'/' + row[this.name_id])
+      else
+        app.navigate('/'+ this.instance +'/' + row[this.name_id])
     },
     setPage: function(page) {
       this.instance_paginator['paginator']['page'] = page
@@ -609,5 +703,240 @@ var paginator_server = {
     param_instance() {
       this.init()
     },
+  }
+}
+
+// ===========  EDIT BLANK ==================
+var edit = {
+  computed: {
+    instance_name() {
+      return this.getRouteParam('instance')
+    },
+    ID: function () {
+      return this.getRouteParam('id')
+    },
+    //  id головної таблиці
+    main_id: function () {
+      return this.getRouteParam('main_id')
+    },
+    //  max номер пп рядка накладної для вводу нового рядка
+    max_npp: function () {
+      return this.getRouteParam('max_npp')
+    },
+  },
+  mounted: function() {
+    this.init()
+  },
+  methods: {
+    init: function () {
+      this.instance = this.instance_name
+      store.commit('title', appDataset[this.instance]['title'])
+      this.instance_url = appDataset[this.instance]['url']
+      this.field_main_id = appDataset[this.instance]['main_id']
+
+      let row = {id: this.ID}
+      this.data = {}
+      if ( row.id == 0 ) {
+        // якщо задано id головної таблиці
+        if (this.main_id) {
+            this.data[this.field_main_id] = this.main_id;
+            this.data.npp = this.max_npp
+        }
+      } else {
+          this.read_back(row, (response)=> {
+              this.data = response
+            },
+            (errors) => {
+              this.show_error(errors)
+            }
+          );
+      }
+      this.load_ext_data()
+    },
+    doAction: function ($event) {
+      if ($event.action.name == 'submit') {
+        if ($event.valid == true) {
+          if (this.ID == 0) {
+            this.create_back(this.data, ()=> {
+              app.notify({type: 'success', message: 'Запис створено'})
+              this.$router.go(-1)
+            }, (errors)=> {
+              this.show_error(errors)
+            })
+          }
+          else {
+            this.update_back(this.data, ()=> {
+              app.notify({type: 'success', message: 'Зміни збережено'})
+              this.$router.go(-1)
+            }, (errors)=> {
+              this.show_error(errors)
+            })
+          }
+        }
+        else {
+          app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')
+        }
+      }
+      if ($event.action.name == 'cancel') {
+        this.$router.go(-1)
+      }
+    },
+    show_error: function(errors) {
+      let message = errors.join('<br>')
+      app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
+    },
+
+    getRouteParam: function (name) {
+      return this.$route.params[name]
+    },
+  },
+  watch: {
+    ID() {
+      this.init()
+    },
+    instance_name() {
+      this.data = null
+      this.init()
+    }
+  }
+}
+
+// ===========  EDIT BLANK INVOICE==================
+var edit_invoce = {
+  data: function () {
+    return {
+      current_row: this.current_row
+    }
+  },
+  computed: {
+    instance_name() {
+      return this.getRouteParam('instance')
+    },
+    ID: function () {
+      return this.getRouteParam('id')
+    },
+  },
+  mounted: function() {
+    this.init()
+  },
+  methods: {
+    //  --- INIT -----
+    init: function () {
+      this.instance = this.instance_name
+      this.instance_detail = appDataset[this.instance]['instance_detail']
+      store.commit('title', appDataset[this.instance]['title'])
+      this.instance_url = appDataset[this.instance]['url']
+      // --- завантаження даних по накладній
+      let row = {id: this.ID}
+      this.data = {}
+      //  якщо накладна існує
+      if (row.id > 0) {
+          this.read_back(row, (response)=> {
+              this.data = response
+            },
+            (errors) => {
+              this.show_error(errors)
+            }
+          );
+      }
+      // --- завантаження даних для вибору в формі
+      this.load_ext_data()
+
+      // --- завантаження даних по рядкам накладної
+      this.load_detail_data(row)
+    },
+     // -------- ОПЕРАЦІЇ -------------
+    doAction: function ($event) {
+      if ($event.action.name == 'submit') {
+        if ($event.valid == true) {
+          if (this.ID == 0) {
+            this.create_back(this.data, (response)=> {
+              app.notify({type: 'success', message: 'Документ створено'})
+              this.$router.push('/invoice/'+ this.instance + '/' +response.num_doc);
+            }, (errors)=> {
+              this.show_error(errors)
+            })
+          }
+          else {
+            this.update_back(this.data, ()=> {
+              app.notify({type: 'success', message: 'Зміни в документі збережено'})
+//              this.$router.go(-1)
+            }, (errors)=> {
+              this.show_error(errors)
+            })
+          }
+        }
+        else {
+          app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')
+        }
+      }
+      if ($event.action.name == 'cancel') {
+//        this.$router.go(-1)
+        this.$router.push('/'+ this.instance)
+      }
+      if ($event.action.name == 'confirm') {
+        this.$router.push('/'+ this.instance)
+      }
+    },
+    // --------- ПОМИЛКИ ------
+    show_error: function(errors) {
+      let message = errors.join('<br>')
+      app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
+    },
+    // --- ПАРАМЕТРИ З РЯДКА РОУТЕРА ---
+    getRouteParam: function (name) {
+      return this.$route.params[name]
+    },
+    // --- ОПЕРАЦІЇ З РЯДКАМИ НАКЛАДНОЇ ---
+    selectRowDetail: function(row) {
+        this.current_row = row
+    },
+    addRowDetail: function() {
+      // останній номер пп рядка накладної для вводу нового рядка
+      let max_npp = 1
+      if (this.detail_data.length > 0) {
+          let max_row = this.detail_data.reduce((max, obj) => (obj.npp > max.npp) ? obj : max);
+          max_npp = max_row.npp + 1
+      }
+      app.navigate('/'+ this.instance_detail + '/0/' + this.data.num_doc + '/' + max_npp )
+    },
+    editRowDetail: function(row) {
+      app.navigate('/'+ this.instance_detail +'/' + row.id)
+    },
+    deleteRowDetail: function(row) {
+        this.delete_detail_data(row)
+    },
+
+  },
+  watch: {
+    ID() {
+      this.init()
+    },
+    instance_name() {
+      this.data = null
+      this.detail_data = null
+      this.init()
+    }
+  }
+}
+
+
+// ===========  TABLE ==================
+var table = {
+  props:['rows', 'current_row', 'fields', 'orderField', 'orderReverse', 'search', 'actions'],
+  methods: {
+    doAction: function (action, row) {
+      this.$emit(action.action, row)
+    }
+  },
+  filters: {
+    colorTheFound: function (value, search) {
+      if (search) {
+        return String(value).replace(new RegExp('('+search+')', 'ig'), '<span class="selected-text">$1</span>')
+      }
+      else {
+        return value
+      }
+    }
   }
 }

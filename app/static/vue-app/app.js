@@ -58,12 +58,17 @@ const routes = [
     component: { template: '<implementation v-if="router.app.componentsReady(`implementation`)" />' },
     beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
   },
+  /*  Коригування накладних */
+
   /*  Універсальні роути */
   { path: '/:instance', component: { template: '<instance-page />' } },
   { path: '/:instance/page/:page', component: { template: '<instance-page />' } },
   { path: '/:instance/prm/:prm', component: { template: '<instance-page />' } },
   { path: '/:instance/:id', component: { template: '<instance-edit />' } },
 
+  /*  Коригування накладних */
+  { path: '/invoice/:instance/:id', component: { template: '<invoce-edit />' } },
+  { path: '/:instance/:id/:main_id/:max_npp', component: { template: '<instance-edit />' } }
 
 ]
 
@@ -71,9 +76,15 @@ const router = new VueRouter({routes})
 const urlHash = '#'
 
 const appDataset = {
+  /* ---  Головне меню --- */
   'menu':{
     'instance': 'menu',
     'url': 'http://localhost:5000/menu/',
+  },
+  /* ---  Статус накладної --- */
+  'status_doc':{
+    'instance': 'status_doc',
+    'url': 'http://localhost:5000/status_doc/',
   },
 
   /* ---  Контрагенти --- */
@@ -91,7 +102,7 @@ const appDataset = {
         {name:'id', 'title': 'Код', type:'number', readonly:true},
         {name:'customer_name', 'title': 'Повна назва', type:'string', placeholder: 'Внесіть повну назву кліента', maxlength: 70, required: true},
         {name:'customer_address', 'title': 'Адреса клієнта', type:'string', placeholder: 'Внесить адресу кліента', maxlength: 100, required: true},
-        {name:'phone', 'title': 'Контактний телефонPhone', type:'string', pattern: '\\(0\\d{2}\\)\\d{3}-\\d{2}-\\d{2}', placeholder: '(000)999-99-99'},
+        {name:'phone', 'title': 'Контактний телефонPhone', type:'string', pattern: '\\(0\\d{2}\\)\\d{3}-\\d{2}-\\d{2}', placeholder: '(099)999-99-99'},
 /*
         {name:'email', 'title': 'Email', type:'email', pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'},
         {name:'password', 'title': 'Password', type:'password'},
@@ -111,6 +122,25 @@ const appDataset = {
     }
   },
 
+  /* --- Одиниці виміру --- */
+  'unit': {
+    'instance': 'unit',
+    'url': 'http://localhost:5000/unit/',
+    'perpage': 5,
+    'title': 'Одиниці виміру',
+    'pk': 'unit_code',
+    'fields': {
+      'table': [
+        {name:'unit_code', 'title': 'Код', type:'string', sort: true},
+        {name:'unit_name', 'title': 'Назва одиниці вимірк', type:'string', sort: true},
+      ],
+      'form': [
+        {name:'unit_code', 'title': 'Код', type:'string', maxlength: 10, readonly:true},
+        {name:'unit_name', 'title': 'Назва одиниці вимірк', type:'string', maxlength: 15, readonly:true},
+      ]
+    }
+  },
+
   /* ---  Товари та послуги --- */
   'item': {
     'instance': 'item',
@@ -121,13 +151,13 @@ const appDataset = {
       'table': [
         {name:'id', 'title': 'Код', type:'number', sort: true},
         {name:'item_name', 'title': 'Назва', type:'string', sort: true},
-        {name:'unit', 'title': 'Одиниця виміру', type:'select', sort: false},
+        {name:'unit', 'title': 'Одиниця виміру', type:'select', sort: true},
         {name:'service', 'title': 'Послуга', type:'string', sort: true},
       ],
       'form': [
         {name:'id', 'title': 'Код', type:'number', readonly:true},
         {name:'item_name', 'title': 'Назва товару (послуги)', type:'string', maxlength: 50, required:true},
-        {name:'unit', 'title': 'Одиниця виміру', type:'select', items:[], required:true},
+        {name:'unit', 'title': 'Одиниця виміру', type:'select', dataset: {src: 'unit', value: 'unit_code', caption: 'unit_name'}, required:true},
         {name:'service', 'title': '', type:'radio', items:[{value:'', caption:'Товар'},{value:'Так', caption:'Послуга'}]},
         {name:'item_description', 'title': 'Опис товару (послуги)', type:'string', maxlength: 150, required:false}
       ]
@@ -139,20 +169,20 @@ const appDataset = {
     'instance': 'balance-item',
     'url': 'http://localhost:5000/balance-item/',
     'title': 'Залишки по партіях',
-    'perpage': 2,
+    'pk': 'party_id',
+    'perpage': 10,
     'fields': {
       'table': [
         {name:'party_id', 'title': 'Код партії', type:'number'},
         {name:'item_id', 'title': 'Код товару', type:'string', sort:true},
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
-
         {name:'date_receipt', 'title': 'Дата партії', type:'mydate', sort:true},
-        {name:'cost', 'title': 'Ціна закупки', type:'number', sort:false},
-        {name:'quantity', 'title': 'Залишок', type:'number', sort:false},
+        {name:'cost', 'title': 'Ціна закупки', type:'number', sort:true},
+        {name:'quantity', 'title': 'Залишок', type:'number', sort:true},
       ],
       'form': [
         {name:'party_id', 'title': 'Код партії', type:'number', readonly:true},
-        {name:'item', 'title': 'Назва товару', type:'string', required:true},
+        {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
         {name:'date_receipt', 'title': 'Дата партії', type:'mydate', required:'required'},
         {name:'cost', 'title': 'Ціна закупки', type:'number', required:true},
         {name:'quantity', 'title': 'Залишок', type:'number', required:true},
@@ -163,26 +193,105 @@ const appDataset = {
 /* ----- Прибуткова накладна ------------  */
   'pinvoice': {
     'instance': 'pinvoice',
+    'instance_detail': 'pinvoice_row',
     'url': 'http://localhost:5000/pinvoice/',
     'title': 'Прибуткові накладні',
-    'perpage': 2,
+    'pk': 'num_doc',
+    'perpage': 10,
     'fields': {
       'table': [
-        {name:'num_doc', 'title': 'Номер документу', type:'number'},
-        {name:'customer_id', 'title': 'Код пстачальника', type:'string', sort:true},
+        {name:'num_doc', 'title': 'Номер документу', type:'number', sort:true},
         {name:'customer_name', 'title': 'Постачальник', type:'string', sort:true},
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', sort:true},
-        {name:'doc_status', 'title': 'Статус', type:'number', sort:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', sort:true},
         {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', sort:true},
-        {name:'custom_numdoc', 'title': 'Номер документу постачальника', type:'string', sort:false},
+        {name:'custom_numdoc', 'title': 'Номер документу постачальника', type:'string', sort:true},
       ],
       'form': [
         {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
-        {name:'customer', 'title': 'Постачальник', type:'string', required:true},
+        {name:'customer_id', 'title': 'Постачальник', type:'select', dataset: {src: 'client', value: 'id', caption: 'customer_name'}, required:true},
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', required:'required'},
-        {name:'doc_status', 'title': 'Статус', type:'number'},
+        {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
         {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate'},
         {name:'custom_numdoc', 'title': 'Номер документу постачальника', type:'string'},
+      ]
+    }
+  },
+
+/* ----- рядки Прибуткова накладна ------------  */
+  'pinvoice_row': {
+    'instance': 'pinvoice_row',
+    'url': 'http://localhost:5000/pinvoice_row/',
+    'title': 'Рядки прибуткової накладної',
+    'perpage': 4,
+    'main_id': 'pinvoice_id',
+    'fields': {
+      'table': [
+        {name:'npp', 'title': '№ пп', type:'number'},
+        {name:'item_id', 'title': 'Код товару', type:'string'},
+        {name:'item_name', 'title': 'Назва товару', type:'string'},
+        {name:'price', 'title': 'Ціна', type:'number'},
+        {name:'quantity', 'title': 'Кількість', type:'number'}
+      ],
+      'form': [
+        {name:'id', 'title': 'Код рядка', type:'number', readonly:true},
+        {name:'pinvoice_id', 'title': 'Код накладної', type:'number', readonly:true},
+        {name:'npp', 'title': '№ пп', type:'number'},
+        {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
+        {name:'price', 'title': 'Ціна', type:'number', required:true},
+        {name:'quantity', 'title': 'Кількість', type:'number', required:true}
+      ]
+    }
+  },
+
+/* ----- Видаткова накладна ------------  */
+  'einvoice': {
+    'instance': 'einvoice',
+    'instance_detail': 'einvoice_row',
+    'url': 'http://localhost:5000/einvoice/',
+    'title': 'Видаткові накладні',
+    'pk': 'num_doc',
+    'perpage': 10,
+    'fields': {
+      'table': [
+        {name:'num_doc', 'title': 'Номер документу', type:'number', sort:true},
+        {name:'customer_name', 'title': 'Отримувач', type:'string', sort:true},
+        {name:'doc_date', 'title': 'Дата документу', type:'mydate', sort:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', sort:true},
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', sort:true},
+      ],
+      'form': [
+        {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
+        {name:'customer_id', 'title': 'Отримувач', type:'select', dataset: {src: 'client', value: 'id', caption: 'customer_name'}, required:true},
+        {name:'doc_date', 'title': 'Дата документу', type:'mydate', required:'required'},
+        {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate'},
+      ]
+    }
+  },
+
+/* ----- рядки Видаткової накладної ------------  */
+  'einvoice_row': {
+    'instance': 'einvoice_row',
+    'url': 'http://localhost:5000/einvoice_row/',
+    'title': 'Рядки видаткової накладної',
+    'perpage': 4,
+    'main_id': 'einvoice_id',
+    'fields': {
+      'table': [
+        {name:'npp', 'title': '№ пп', type:'number'},
+        {name:'item_id', 'title': 'Код товару', type:'string'},
+        {name:'item_name', 'title': 'Назва товару', type:'string'},
+        {name:'price', 'title': 'Ціна', type:'number'},
+        {name:'quantity', 'title': 'Кількість', type:'number'}
+      ],
+      'form': [
+        {name:'id', 'title': 'Код рядка', type:'number', readonly:true},
+        {name:'einvoice_id', 'title': 'Код накладної', type:'number', readonly:true},
+        {name:'npp', 'title': '№ пп', type:'number'},
+        {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
+        {name:'price', 'title': 'Ціна', type:'number', required:true},
+        {name:'quantity', 'title': 'Кількість', type:'number', required:true}
       ]
     }
   },

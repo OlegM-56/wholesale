@@ -5,10 +5,17 @@ Vue.component('v-style', {
 });
 
 Vue.component('standard-table', {
-  props:['rows', 'current_row', 'fields', 'orderField', 'orderReverse', 'search', 'actions'],
+  mixins:[table],
+  methods: {
+      formatField(fieldType, value) {
+        if ( fieldType != 'mydate' || !value ) return value;
+
+        const valueDate = new Date(value);
+        return valueDate.toLocaleDateString({ day: 'numeric', month: 'numeric', year: 'numeric' });
+      }
+  },
   template: `
 <div>
-
   <v-style>
     .selected-text {
       background-color: yellow;
@@ -25,10 +32,10 @@ Vue.component('standard-table', {
             {{field.title}}
         </template>
     </u-th>
-    <u-th v-if="actions">Action</u-th>
+    <u-th v-if="actions">Операція</u-th>
   </u-tr>
   <u-tr v-for="row in rows" @click="$emit('select', row)" :class="current_row==row?'bg-dark text-white':''">
-    <u-td v-for="field in fields" :label="field.title" v-html="$options.filters.colorTheFound(row[field.name], search)"></u-td>
+    <u-td v-for="field in fields" :label="field.title" v-html="$options.filters.colorTheFound(formatField(field.type, row[field.name]), search)"></u-td>
     <u-td v-if="actions">
         <a v-for="action in actions" @click="doAction(action, row)" :title="action.title" class="mr-1"><span :class="action.class">{{action.caption}}</span></a>
     </u-td>
@@ -36,24 +43,8 @@ Vue.component('standard-table', {
   </u-table>
 
 </div>
-`,
-methods: {
-  doAction: function (action, row) {
-    this.$emit(action.action, row)
-  }
-},
-filters: {
-  colorTheFound: function (value, search) {
-    if (search) {
-      return String(value).replace(new RegExp('('+search+')', 'ig'), '<span class="selected-text">$1</span>')
-    }
-    else {
-      return value
-    }
-  }
-}
+`
 })
-
 
 Vue.component('form-field', {
   /*
@@ -83,6 +74,8 @@ Vue.component('form-field', {
   <div v-if="field.type=='label'" :id="'field_'+field.name">{{value}}</div>
   <div v-if="field.type=='html'" v-html="value"></div>
 
+  <input v-if="field.type=='mydate'" type="date" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :required="field.required" autocomplete="off">
+
   <input v-if="field.type=='string'" type="text" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
   <input v-if="field.type=='email'" type="email" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
   <input v-if="field.type=='password'" type="password" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
@@ -90,7 +83,7 @@ Vue.component('form-field', {
   <input v-if="field.type=='url'" type="url" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
 
   <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
-  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder">
+  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
 
   <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
 
@@ -170,6 +163,7 @@ methods: {
 }
 })
 
+// ===================================== Таблиця-перелік записів обраної моделі ===============================
 Vue.component('instance-page', {
   mixins: [crud, crud_front, crud_ext, paginator_server /*, paginator_local*/],
   template: `
@@ -195,8 +189,8 @@ Vue.component('instance-page', {
       :search="search"
 
       :actions="[
-          {name:'edit', caption:'', title: ' Edit', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900'},
-          {name:'delete', caption:'', title: 'Delete', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900'}
+          {name:'edit', caption:'', title: 'Змінити', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900'},
+          {name:'delete', caption:'', title: 'Видалити', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900'}
       ]"
 
       @select="selectRow($event)"
@@ -211,17 +205,9 @@ Vue.component('instance-page', {
 </div>`,
 })
 
-
+// ================================  Бланк коригування обраного запису таблиці-переліку ==================================
 Vue.component('instance-edit', {
-  mixins: [crud, crud_ext],
-  computed: {
-    param_instance() {
-      return this.getRouteParam('instance')
-    },
-    ID: function () {
-      return this.getRouteParam('id')
-    },
-  },
+  mixins: [crud, crud_ext, edit],
   template: `
 <div>
   <div v-if="data">
@@ -229,83 +215,100 @@ Vue.component('instance-edit', {
       :data=data
       :fields=form_fields
       :actions="[
-          {name:'submit', title: 'Save', action: 'Save', class: '', dafault: true},
+          {name:'submit', title: 'Зберегти', action: 'Save', class: '', dafault: true},
           {name:'cancel', title: 'Cancel', action: 'Cancel', class: ''}
       ]"
       @action="doAction($event)"
     />
   </div>
 </div>`
-,
+})
+
+// ==============  Коригування накладних =======================
+Vue.component('invoice-form', {
+  props:['data', 'loading', 'fields', 'actions'],
+  data : function () {
+    return {
+      // For interactivity
+      form_fields: this.form_fields
+    }
+  },
+  template: `
+<form name="dataForm" autocomplete="off">
+  <table whidth="100%">
+    <tr v-for="field in form_fields">
+        <td>
+            <label v-if="field.title && (['checkbox','switch','autocomplete','file'].indexOf(field.type)==-1)">{{field.title}}<sup v-if="field.required==true">*</sup></label>
+        </td>
+        <td>
+            <form-field :field=field v-model="data[field.name]" :value=data[field.name] @keyEnter="submitForm(dataForm.checkValidity())" />
+            <small v-if="field.help" class="form-text text-muted">{{field.help}}</small>
+        </td>
+    </tr>
+  </table>
+  <div class="form-group">
+    <input v-for="action in actions" type="button" :value="action.title" class="btn btn-primary m-1" @click="doAction(dataForm.checkValidity(), action)" :disabled="action.disabled">
+  </div>
+</form>
+`,
 mounted: function() {
-  this.init()
+  // For interactivity
+  this.form_fields = this.fields
 },
 methods: {
-  init: function () {
-    this.instance = this.param_instance
-    store.commit('title', appDataset[this.instance]['title'])
-    this.instance_url = appDataset[this.instance]['url']
-
-    let row = {id: this.ID}
-    this.read_back(row, (response)=> {
-        this.data = response
-      },
-      (errors) => {
-        this.show_error(errors)
-      }
-    );
-
-    this.load_ext_data()
-  },
-  doAction: function ($event) {
-    if ($event.action.name == 'submit') {
-      if ($event.valid == true) {
-        if (this.ID == 0) {
-          this.create_back(this.data, ()=> {
-            app.notify({type: 'success', message: 'Created successfully'})
-            this.$router.go(-1)
-          }, (errors)=> {
-            this.show_error(errors)
-          })
-        }
-        else {
-          this.update_back(this.data, ()=> {
-            app.notify({type: 'success', message: 'Saved successfully'})
-            this.$router.go(-1)
-          }, (errors)=> {
-            this.show_error(errors)
-          })
-        }
-      }
-      else {
-        app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')
+  submitForm: function(valid) {
+    // Default action executed by press enter
+    for (let action of this.actions) {
+      if (action.dafault && action.dafault == true) {
+        this.doAction(valid, action)
+        break;
       }
     }
-    if ($event.action.name == 'cancel') {
-      this.$router.go(-1)
-    }
   },
-  show_error: function(errors) {
-    let message = errors.join('<br>')
-    app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
-  },
-
-  getRouteParam: function (name) {
-    return this.$route.params[name]
-  },
-},
-watch: {
-  ID() {
-    this.init()
-  },
-  param_instance() {
-    this.data = null
-    this.init()
+  doAction: function(valid, action) {
+      this.$emit('action', {'action': action, 'row': this.data, 'valid': valid})
   }
 }
 })
 
+Vue.component('invoce-edit', {
+  mixins: [crud, crud_ext, crud_detail, edit_invoce],
+  template: `
+<div>
+  <!--  --- Шапка накладної --- -->
+  <div v-if="data">
+    <invoice-form
+      :data=data
+      :fields=form_fields
+      :actions="[
+          {name:'submit', title: 'Зберегти', action: 'Save', class: '', dafault: true},
+          {name:'cancel', title: 'Cancel', action: 'Cancel', class: ''},
+          {name:'confirm', title: 'Провести документ', action: 'confirm', class: '', disabled: true}
+      ]"
+      @action="doAction($event)"
+    />
 
+    <!-- --- Рядки накладної --- -->
+    <button @click="addRowDetail()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
+
+    <standard-table
+      :fields=detail_fields
+      :rows=detail_data
+      :current_row="current_row"
+      :actions="[
+          {name:'edit', caption:'', title: 'Змінити', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900'},
+          {name:'delete', caption:'', title: 'Видалити', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900'}
+      ]"
+
+      @select="selectRowDetail($event)"
+      @edit="editRowDetail($event)"
+      @delete="deleteRowDetail($event)"
+    />
+  </div>
+`
+})
+
+// =======================================================================================
 Vue.component('paginator', {
   props: {
     pages: Number,
@@ -421,7 +424,7 @@ Vue.component('table-menu', {
 
     <div class="row mr-3 mt-1 mb-1" v-if="show">
       <div class="col-auto p-0">
-        <input type="text" class="form-control input-sm auto-width" maxlength="25" v-model="filter" @keyup="changeFilter()" @keyup.enter="search()" placeholder="search">
+        <input type="text" class="form-control input-sm auto-width" maxlength="25" v-model="filter" @keyup="changeFilter()" @keyup.enter="search()" placeholder="ключ пошуку...">
       </div>
       <div class="col-auto p-0">
         <button @click="search()" class="btn bt-sm"><i class="fas fa-search text-primary" title="Search"></a></button>
@@ -592,7 +595,7 @@ Vue.component('notification', {
   }
 })
 
-
+// ==============================  ГОЛОВНЕ МЕНЮ =====================
 Vue.component('app-menu', {
   props:['version'],
   mixins:[crud, crud_front],

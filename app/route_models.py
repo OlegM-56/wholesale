@@ -3,6 +3,7 @@ from .models import *
 """ ---------- Models list for automatic routing ---------- """
 Models = {}
 Models['menu'] = {'class': Menu}
+Models['status_doc'] = {'class': StatusDoc}
 Models['client'] = {'class': Customer, 'schema': customer_schema, 'schemas': customers_schema}
 Models['item'] = {'class': Item, 'schema': item_schema, 'schemas': items_schema}
 Models['unit'] = {'class': Unit, 'schema': unit_schema, 'schemas': units_schema}
@@ -10,5 +11,5 @@ Models['pinvoice'] = {'class': Pinvoice, 'schema': pinvoice_schema, 'schemas': p
 Models['pinvoice_row'] = {'class': PinvoiceRow, 'schema': pinvoice_row_schema, 'schemas': pinvoice_rows_schema}
 Models['einvoice'] = {'class': Einvoice, 'schema': einvoice_schema, 'schemas': einvoices_schema}
 Models['einvoice_row'] = {'class': EinvoiceRow, 'schema': einvoice_row_schema, 'schemas': einvoice_rows_schema}
-Models['warehouse_order_row'] = {'class': WarehouseOrderRow, 'schema': warehouse_order_row_schema, 'schemas': warehouse_order_rows_schema}
+# Models['warehouse_order_row'] = {'class': WarehouseOrderRow, 'schema': warehouse_order_row_schema, 'schemas': warehouse_order_rows_schema}
 Models['balance-item'] = {'class': BalanceItem, 'schema': balance_item_schema, 'schemas': balance_items_schema}

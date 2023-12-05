@@ -1,8 +1,9 @@
 from flask import render_template, jsonify, request, send_from_directory
-from . import app
+from . import app, db
 from .models import *
 from .route_models import Models
-from sqlalchemy import or_
+from sqlalchemy import or_, desc, func, collate
+
 
 # ----------------  Маршрути ------------------
 # ----- Головна сторінка  FrontEnd
@@ -10,8 +11,9 @@ from sqlalchemy import or_
 @app.route('/home')
 def serve_index():
     # Використовуємо функцію send_from_directory для відправки файла index.html із каталогу 'static'
-    return send_from_directory('static','index.html')
+    return send_from_directory('static', 'index.html')
     # return render_template('index.html')
+
 
 ##############################
 # Create
@@ -22,9 +24,14 @@ def create_data(model):
         model - модель/таблиця
         request.json - дані для нового запису
     """
+    data_json = request.get_json()
+    if not data_json:
+        return jsonify([{'error': f"Дані для створення нового запису в моделі {model} не передано!"}]), 404
     # Десеріалізуємо дані з JSON згідно схеми
-    dd = request.get_json()
-    request_data = Models[model]['schema'].load(request.get_json())
+    request_data = Models[model]['schema'].load(data_json)
+    #  видаляємо невизначені поля
+    request_data = {key: value for key, value in request_data.items() if value}
+
     # створюємо обєкт моделі
     try:
         new_data = Models[model]['class'](**request_data)
@@ -48,9 +55,8 @@ def create_data(model):
 # Read
 ##############################
 @app.route('/<string:model>/', methods=['GET'])
-@app.route('/<string:model>/<options>', methods=['GET'])
-# @app.route('/<string:model>/<pk>', methods=['GET'])
-# @app.route('/<string:model>/<pk>/<options>', methods=['GET'])
+@app.route('/<string:model>/<pk>/', methods=['GET'])
+@app.route('/<string:model>/<pk>/<options>', methods=['GET'])
 def get_data(model, pk='', options=None):
     """ --- Отримання даних з будь-якої моделі (таблиці) ---
         model - модель/таблиця
@@ -67,14 +73,14 @@ def get_data(model, pk='', options=None):
     if model in Models:
         # ------- Видача одного запису ---------
         # пошук запису по primary key
-        if pk and pk != '0':
+        if pk and pk != '00':
             data = Models[model]['class'].query.get(pk)
             # переводимо в json згідно зі схемою
             if 'schema' in Models[model]:
-                json_data = Models[model]['schema'].jsonify(data)
+                json_data = Models[model]['schema'].jsonify(data).json
             else:
                 # або без схеми
-                json_data = jsonify(data)
+                json_data = jsonify(data).json
         # -------- Видача декількох записів таблиці -------
         else:
             record_count = ''
@@ -85,6 +91,9 @@ def get_data(model, pk='', options=None):
             else:
                 # ----- є додаткові параметри  ---
                 options = json.loads(options)
+                # ---====  якщо модель має спецметод для складних Моделей(декілька повязаних таблиць) для пошуку та сортування
+                dataset = get_spec_dataset(Models[model]['class'])
+                # ---===
                 data = []
                 # --- є пошук
                 filters = []
@@ -93,27 +102,59 @@ def get_data(model, pk='', options=None):
                         field_name = param.get('field')
                         fvalue = param.get('value')
                         if field_name and fvalue:
-                            field = getattr(Models[model]['class'], field_name, None)
+                            field = get_spec_field(Models[model]['class'], field_name)
                             if field is not None:
                                 filters.append(field.ilike(f"%{param['value']}%"))
-                    if filters:
-                        data = Models[model]['class'].query.filter(or_(*filters)).all()
+                # --- відбір рядків накладної
+                # "{details":{"field":"pinvoice_id","value":4}}
+                elif 'details' in options:
+                    param = options['details']
+                    field_name = param.get('field')
+                    fvalue = param.get('value')
+                    if field_name and fvalue:
+                        field = get_spec_field(Models[model]['class'], field_name)
+                        if field is not None:
+                            filters.append(field == fvalue)
+
                 # ---- є пагінатор
                 paginator = False
                 if 'paginator' in options:
                     if 'limit' in options['paginator'] and 'page' in options['paginator']:
                         limit = options['paginator']['limit']
                         offset = limit * (options['paginator']['page'] - 1)
-                        if filters:
-                            data = Models[model]['class'].query.filter(or_(*filters)).offset(offset).limit(limit).all()
-                            # --- загальна кількість записів в запиті
-                            total_records = Models[model]['class'].query.filter(or_(*filters)).count()
-                        else:
-                            data = Models[model]['class'].query.offset(offset).limit(limit).all()
-                            # --- загальна кількість записів в запиті
-                            total_records = Models[model]['class'].query.count()
-                        record_count = {'_total_records_': total_records}
                         paginator = True
+                # ----- Є сортування (по одному полю)
+                order = {}
+                if 'order' in options:
+                    param = options['order'][0]
+                    order['desc'] = 'desc' in param
+                    if order['desc']:
+                        field_name = param.split(' ')[0]
+                    else:
+                        field_name = param
+                    if field_name:
+                        field = get_spec_field(Models[model]['class'], field_name)
+                        if field is not None:
+                            order['field'] = field
+
+                #  ========= відбираємо дані з моделі -----
+                # ------ Є фільтр ------
+                if filters:
+                    dataset = dataset.filter(or_(*filters))
+                # ------ є сортування ----------
+                if order:
+                    if order['desc']:
+                        dataset = dataset.order_by(desc(order['field']))
+                    else:
+                        dataset = dataset.order_by(order['field'])
+                # --- загальна кількість записів в запиті
+                total_records = dataset.count()
+                record_count = {'_total_records_': total_records}
+                # ------ є Пагінатор
+                if paginator:
+                    dataset = dataset.offset(offset).limit(limit)
+
+                data = dataset.all()
 
             # переводимо в json згідно зі схемою
             if 'schemas' in Models[model]:
@@ -126,7 +167,7 @@ def get_data(model, pk='', options=None):
             if record_count:
                 json_data.append(record_count)
     else:
-        json_data = jsonify({'error': f"Невідома модель <{model}>"})
+        json_data = jsonify({'error': f"Невідома модель {model}"})
 
     return json.dumps(json_data)
 
@@ -230,47 +271,54 @@ def update_data(model, pk):
         pk - значення primary key запису
         request.json - дані для оновлення
     """
-    print('pk= ', pk)
-    dd = request.get_json()
-    data_new = Models[model]['schema'].load(request.get_json())
+    data_json = request.get_json()
+    if not data_json:
+        return jsonify([{'error': f"Дані для оновлення запису з pk={pk} в моделі {model} не передано!"}]), 404
     # пошук запису для оновлення
     data = Models[model]['class'].query.get(pk)
     if not data:
-        return jsonify([{'error': f"Запис з pk={pk} в моделі <{model}> не знайдено!"}]), 404
-
-    #  -- перевірка, чи існує метод з іменем "update" у класі
-    if 'update' in dir(Models[model]['class']):
-        Models[model]['class'].update(data, request.json)
-    else:
-        dd = request.get_json()
+        return jsonify([{'error': f"Запис з pk={pk} в моделі {model} не знайдено!"}]), 404
+    try:
         # Десеріалізуємо дані з JSON згідно схеми
-        # data_new = Models[model]['schema'].load(request.get_json())
+        data_new = Models[model]['schema'].load(data_json)
 
-        # дані з item_data копіюємо до відповідних атрибутів об'єкту data
+        #  -- якщо існує метод з іменем "before_update" у класі, виконуємо
+        if 'before_update' in dir(Models[model]['class']):
+            Models[model]['class'].before_update(data, data_new)
+
+        # дані з data_new копіюємо до відповідних атрибутів об'єкту data
         for field in data_new:
             setattr(data, field, data_new[field])
 
-        # # дані з request.json копіюємо до відповідних атрибутів об'єкту data
-        # for field in request.json:
-        #     setattr(data, field, request.json.get(field))
-
-    db.session.commit()
-    # повертаємо відредагований обєкт
-    return Models[model]['schema'].jsonify(data), 200
-
+        db.session.commit()
+        # повертаємо відредагований обєкт
+        return Models[model]['schema'].jsonify(data), 200
+    except Exception as e:
+        # Відкат у випадку помилки
+        db.session.rollback()
+        print(f"Помилка: {e}")
+        return jsonify([{'error': f"Помилка коригування запису з pk={pk} в моделі {model}!"}]), 500
 
 ##############################
 # Delete
 ##############################
 @app.route('/<string:model>/<pk>/', methods=['DELETE'])
 def delete_data(model, pk):
-    data = Models[model]['class'].query.get(pk)
-    if not data:
-        return jsonify([{'error': f"Запис з pk={pk} в моделі <{model}> не знайдено!"}]), 404
+    row = Models[model]['class'].query.get(pk)
+    if not row:
+        return jsonify([{'error': f"Запис з pk={pk} в моделі {model} не знайдено!"}]), 404
+    #  якщо існує спеціальний метод виделення (наприклад для накладних)
+    if 'delete_row' in dir(Models[model]['class']):
+        if not Models[model]['class'].delete_row(row):
+            return jsonify([{'error': f"Помилка видалення запису з pk={pk} в моделі {model}!"}]), 404
 
-    db.session.delete(data)
-    db.session.commit()
-    return Models[model]['schema'].jsonify(data), 200
+    #  звичайне видалення рядка таблиці
+    else:
+        db.session.delete(row)
+        db.session.commit()
+
+    return jsonify([{'OK': f"Запис з pk={pk} в моделі {model} видалено!"}]), 200
+
 
 ##############################
 # Заповнення бази

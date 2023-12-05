@@ -5,13 +5,14 @@ from sqlalchemy.orm import relationship
 
 from . import db, ma
 
-# ===============================================================================
-# MENU
-# ===============================================================================
-import os, json, codecs
+import os
+import json
+import codecs
 
 
+# ============================ Моделі в файлах ====================================
 class Menu:
+    """ ---  Головне меню ---"""
     class query:
         @staticmethod
         def all():
@@ -23,9 +24,47 @@ class Menu:
             return menu
 
 
-# ===============================================================================
+class StatusDoc:
+    """ ---  Статус накладної ---"""
+    class query:
+        @staticmethod
+        def all():
+            file_json = 'status_doc.json'
+            status_doc = {}
+            if os.path.isfile(file_json):
+                with codecs.open(file_json, 'r', 'utf-8') as file_data:
+                    status_doc = json.load(file_data)
+            return status_doc
+
+        @staticmethod
+        def get(pk):
+            status_list = StatusDoc.query.all()
+            status = {item["id"]: item["name_status"] for item in status_list if item["id"] == pk}
+            return status.get(pk, '')
 
 
+# ============================ Функції ====================================
+def get_spec_dataset(model):
+    """  якщо модель має спецметод для складних Моделей(декілька повязаних таблиць) для пошуку та сортування  """
+    if 'get_dataset' in dir(model):
+        dataset = model.get_dataset()
+    else:
+        dataset = model.query
+
+    return dataset
+
+
+def get_spec_field(model, field_name):
+    """  якщо модель має спецметод для складних Моделей(декілька повязаних таблиць) для пошуку та сортування  """
+    if 'get_field' in dir(model):
+        field = model.get_field(field_name)
+    else:
+        field = getattr(model, field_name, None)
+
+    return field
+
+
+# ============================ Моделі в БД ====================================
 class Customer(db.Model):
     """ --- Клієнти ---"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -39,6 +78,7 @@ class Customer(db.Model):
 
 class CustomerSchema(ma.Schema):
     """ Customer_schema """
+
     class Meta:
         fields = ('id', 'customer_name', 'customer_address', 'phone')
 
@@ -90,6 +130,7 @@ class Item(db.Model):
 
 class ItemSchema(ma.Schema):
     """ Item_schema """
+
     class Meta:
         fields = ('id', 'item_name', 'unit', 'service', 'item_description')
 
@@ -103,6 +144,8 @@ class ItemSchema(ma.Schema):
         # ввод данных
         deserialize=lambda value: value if value else ''
     )
+
+
 # Schema's initializing
 item_schema = ItemSchema()
 items_schema = ItemSchema(many=True)
@@ -116,17 +159,52 @@ class Pinvoice(db.Model):
     doc_date = db.Column(db.Date, nullable=False)
     doc_status = db.Column(db.Integer, nullable=False, default=0)
     doc_date_approve = db.Column(db.Date, nullable=True)
-    custom_numdoc = db.Column(db.String(30), nullable=True, default='')
+    custom_numdoc = db.Column(db.String(30), nullable=True)
 
     def __repr__(self):
-        return f"Pinvoice {self.num_doc} (self.custom_numdoc), {self.doc_date}"
+        return f"Pinvoice {self.num_doc} ({self.custom_numdoc}), {self.doc_date}"
 
+    @staticmethod
+    def get_dataset():
+        """ DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        return Pinvoice.query.join(Customer, Pinvoice.customer_id == Customer.id)
+
+    @staticmethod
+    def get_field(field_name):
+        """ Отримання поля з DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        if field_name == 'customer_name':
+            field = Customer.customer_name
+        elif field_name == 'doc_status_name':
+            field = Pinvoice.doc_status
+        else:
+            field = getattr(Pinvoice, field_name, None)
+        return field
+
+    @staticmethod
+    def delete_row(row):
+        """ метод для коректного видалення рядків накладної на самої накладної"""
+        try:
+            # row - документ Pinvoice для видалення
+            if row is not None:
+                # Видаляємо всі рядки документу Pinvoice
+                PinvoiceRow.query.filter_by(pinvoice_id=row.num_doc).delete()
+                # Видаляємо сам документ Pinvoice
+                db.session.delete(row)
+                # Зберігаємо зміни в базі даних
+                db.session.commit()
+                return True
+            else:
+                return False
+        except Exception as e:
+            print('error"', str(e))
+            return False
 
 class PinvoiceSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_date_approve', 'custom_numdoc')
+        fields = (
+            'num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_status_name', 'doc_date_approve', 'custom_numdoc')
 
     doc_date = fields.Function(
         # дата в строку
@@ -144,7 +222,14 @@ class PinvoiceSchema(ma.Schema):
         serialize=lambda obj: obj.customer.customer_name if obj is not None and obj.customer else '',
         deserialize=lambda value: None
     )
-
+    doc_status_name = fields.Function(
+        serialize=lambda obj: StatusDoc.query.get(obj.doc_status),
+        deserialize=lambda value: None
+    )
+    custom_numdoc = fields.Function(
+        serialize=lambda obj: obj.custom_numdoc if obj and obj.custom_numdoc else '',
+        deserialize=lambda value: value
+    )
 
 # Schema's initializing
 pinvoice_schema = PinvoiceSchema()
@@ -155,21 +240,39 @@ class PinvoiceRow(db.Model):
     """ --- Прибуткова накладна, рядки ---"""
     __tablename__ = 'pinvoice_row'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    pinvoice = db.Column(db.Integer, db.ForeignKey('pinvoice.num_doc'), nullable=False)
+    pinvoice_id = db.Column(db.Integer, db.ForeignKey('pinvoice.num_doc', name='fk_pinvoice_num_doc'), nullable=False)
+    pinvoice = relationship('Pinvoice', backref='pinvoice_row_items')
     npp = db.Column(db.Integer, nullable=False)
-    item = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_pinvoice_row_item'), nullable=False)
+    # Визначаємо відношення до моделі Item
+    item = relationship('Item', backref='pinvoice_row_items')
     quantity = db.Column(db.Float, nullable=False, default=0)
     price = db.Column(db.Float, nullable=False, default=0)
 
     def __repr__(self):
         return f"Pinvoice_row Doc N {self.pinvoice}, npp {self.npp}"
 
+    @staticmethod
+    def before_update(row_old, row_new):
+        """ метод для коригування рядків накладної:
+            якщо накладна проведена, то зміни кількості в рядку змінюють залишки по партіях в моделі BalanceItem
+            для цього викликається метод  BalanceItem.update_balance, якому передаються старі дані рядка та нові дангі рядка накладної
+        """
+        BalanceItem.update_balance(True, row_old, row_new)
+
 
 class PinvoiceRowSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('id', 'pinvoice', 'npp', 'item', 'quantity', 'price')
+        fields = ('id', 'pinvoice_id', 'npp', 'item_id', 'item_name', 'quantity', 'price')
+
+    item_name = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.item_name if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
 
 
 # Schema's initializing
@@ -180,21 +283,77 @@ pinvoice_rows_schema = PinvoiceRowSchema(many=True)
 class Einvoice(db.Model):
     """ --- Видаткова накладна ---"""
     num_doc = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    customer = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id', name='fk_einvoice_customer'), nullable=False)
+    customer = relationship('Customer', backref='einvoice_customer')
     doc_date = db.Column(db.Date, nullable=False)
     doc_status = db.Column(db.Integer, nullable=False, default=0)
-    doc_date_approve = db.Column(db.Date)
+    doc_date_approve = db.Column(db.Date, nullable=True)
 
     def __repr__(self):
-        return f"Einvoice {self.num_doc}, {self.doc_date}"
+        return f"Einvoice {self.num_doc} від {self.doc_date}"
 
+    @staticmethod
+    def get_dataset():
+        """ DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        return Einvoice.query.join(Customer, Einvoice.customer_id == Customer.id)
+
+    @staticmethod
+    def get_field(field_name):
+        """ Отримання поля з DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        if field_name == 'customer_name':
+            field = Customer.customer_name
+        elif field_name == 'doc_status_name':
+            field = Einvoice.doc_status
+        else:
+            field = getattr(Einvoice, field_name, None)
+        return field
+
+    @staticmethod
+    def delete_row(row):
+        """ метод для коректного видалення рядків накладної на самої накладної"""
+        try:
+            # row - документ Pinvoice для видалення
+            if row is not None:
+                # Видаляємо всі рядки документу Pinvoice
+                EinvoiceRow.query.filter_by(einvoice_id=row.num_doc).delete()
+                # Видаляємо сам документ Pinvoice
+                db.session.delete(row)
+                # Зберігаємо зміни в базі даних
+                db.session.commit()
+                return True
+            else:
+                return False
+        except Exception as e:
+            print('error"', str(e))
+            return False
 
 class EinvoiceSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('num_doc', 'customer', 'doc_date', 'doc_status', 'doc_date_approve')
+        fields = (
+            'num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_status_name', 'doc_date_approve')
 
+    doc_date = fields.Function(
+        # дата в строку
+        serialize=lambda obj: obj.doc_date.strftime('%Y-%m-%d') if obj and obj.doc_date else '',
+        # строка в дату
+        deserialize=lambda value: datetime.strptime(value, '%Y-%m-%d') if value else None
+    )
+    doc_date_approve = fields.Function(
+        # дата в строку
+        serialize=lambda obj: obj.doc_date_approve.strftime('%Y-%m-%d') if obj and obj.doc_date_approve else '',
+        # строка в дату
+        deserialize=lambda value: datetime.strptime(value, '%Y-%m-%d') if value else None
+    )
+    customer_name = fields.Function(
+        serialize=lambda obj: obj.customer.customer_name if obj is not None and obj.customer else '',
+        deserialize=lambda value: None
+    )
+    doc_status_name = fields.Function(
+        serialize=lambda obj: StatusDoc.query.get(obj.doc_status),
+        deserialize=lambda value: None
+    )
 
 # Schema's initializing
 einvoice_schema = EinvoiceSchema()
@@ -205,50 +364,58 @@ class EinvoiceRow(db.Model):
     """ --- Видаткова накладна, рядки ---"""
     __tablename__ = 'einvoice_row'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    einvoice = db.Column(db.Integer, db.ForeignKey('einvoice.num_doc'), nullable=False)
+    einvoice_id = db.Column(db.Integer, db.ForeignKey('einvoice.num_doc', name='fk_einvoice_num_doc'), nullable=False)
+    einvoice = relationship('Einvoice', backref='einvoice_row_items')
     npp = db.Column(db.Integer, nullable=False)
-    item = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_einvoice_row_item'), nullable=False)
+    # Визначаємо відношення до моделі Item
+    item = relationship('Item', backref='einvoice_row_items')
     quantity = db.Column(db.Float, nullable=False, default=0)
     price = db.Column(db.Float, nullable=False, default=0)
 
     def __repr__(self):
         return f"Einvoice_row Doc N {self.einvoice}, npp {self.npp}"
 
-
 class EinvoiceRowSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('id', 'einvoice', 'npp', 'item', 'quantity', 'price')
+        fields = ('id', 'einvoice_id', 'npp', 'item_id', 'item_name', 'quantity', 'price')
 
+    item_name = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.item_name if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
 
 # Schema's initializing
 einvoice_row_schema = EinvoiceRowSchema()
 einvoice_rows_schema = EinvoiceRowSchema(many=True)
 
 
-class WarehouseOrderRow(db.Model):
-    """ --- рядки складського ордеру (списання залишків по партіях) ---"""
-    __tablename__ = 'warehouse_order_row'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    einvoice_row = db.Column(db.Integer, db.ForeignKey('einvoice_row.id'), nullable=False)
-    quantity = db.Column(db.Float, nullable=False, default=0)
-    cost = db.Column(db.Float, nullable=False, default=0)
+# class WarehouseOrderRow(db.Model):
+#     """ --- рядки складського ордеру (списання залишків по партіях) ---"""
+#     __tablename__ = 'warehouse_order_row'
+#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     einvoice_row = db.Column(db.Integer, db.ForeignKey('einvoice_row.id'), nullable=False)
+#     quantity = db.Column(db.Float, nullable=False, default=0)
+#     cost = db.Column(db.Float, nullable=False, default=0)
+#
+#     def __repr__(self):
+#         return f"Warehouse_order_row id {self.id}, einvoice_row {self.einvoice_row}"
 
-    def __repr__(self):
-        return f"Warehouse_order_row id {self.id}, einvoice_row {self.einvoice_row}"
-
-
-class WarehouseOrderRowSchema(ma.Schema):
-    """ schema """
-
-    class Meta:
-        fields = ('id', 'einvoice', 'npp', 'item', 'quantity', 'price')
-
-
-# Schema's initializing
-warehouse_order_row_schema = WarehouseOrderRowSchema()
-warehouse_order_rows_schema = WarehouseOrderRowSchema(many=True)
+#
+# class WarehouseOrderRowSchema(ma.Schema):
+#     """ schema """
+#
+#     class Meta:
+#         fields = ('id', 'einvoice', 'npp', 'item', 'quantity', 'price')
+#
+#
+# # Schema's initializing
+# warehouse_order_row_schema = WarehouseOrderRowSchema()
+# warehouse_order_rows_schema = WarehouseOrderRowSchema(many=True)
 
 
 class BalanceItem(db.Model):
@@ -265,9 +432,67 @@ class BalanceItem(db.Model):
     def __repr__(self):
         return f"Balance_item {self.party_id}, item {self.item}"
 
+    @staticmethod
+    def get_dataset():
+        """ DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        return BalanceItem.query.join(Item, BalanceItem.item_id == Item.id)
+
+    @staticmethod
+    def get_field(field_name):
+        """ Отримання поля з DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        if field_name == 'item_name':
+            field = Item.item_name
+        else:
+            field = getattr(BalanceItem, field_name, None)
+        return field
+
+    @staticmethod
+    def update_balance(adding, row_old, row_new):
+        """ якщо накладна проведена, то зміни кількості в рядку змінюють залишки по партіях в моделі BalanceItem
+            для цього викликається метод  BalanceItem.update_balance, якому передаються старі дані рядка та нові дангі рядка накладної
+        """
+        # ------- Надходження товару на склад -------
+        if adding:
+            # -- шукаємо партію по старих даних
+            old_party = None
+            #  дата проведення накладної
+            date_receipt_old = Pinvoice.query.get(row_old.pinvoice_id).doc_date_approve
+            if date_receipt_old:
+                old_party = BalanceItem.query.filter_by(
+                    item_id=row_old.item_id, date_receipt=date_receipt_old, cost=row_old.price
+                ).first()
+
+            # -- шукаємо партію по нових даних
+            new_party = None
+            #  дата проведення накладної
+            date_receipt_new = Pinvoice.query.get(row_new['pinvoice_id']).doc_date_approve
+            if date_receipt_new:
+                #  нова та стара партія - однакові
+                if (old_party and
+                        row_new['item_id'] == row_old.item_id and date_receipt_new == date_receipt_old and row_new['price'] == row_old.price):
+                    new_party = old_party
+                else:
+                    # інакше -  шукаємо партію по нових даних
+                    new_party = BalanceItem.query.filter_by(
+                        item_id=row_new['item_id'], date_receipt=date_receipt_new, cost=row_new['price']
+                    ).first()
+                #  якщо немає нової партії - створюємо
+                if not new_party:
+                    new_party = BalanceItem(item_id=row_new['item_id'], date_receipt=date_receipt_new, cost=row_new['price'], quantity=0)
+                    db.session.add(new_party)
+
+            # ----- Віднімаємо кількість від старої партії
+            if old_party:
+                old_party.quantity = old_party.quantity - row_old.quantity
+                if old_party.quantity < 0:  old_party.quantity = 0
+            # ----- Додаємо кількість до нової партії
+            if new_party:
+                new_party.quantity = new_party.quantity + float(row_new['quantity'])
+
 
 class BalanceItemSchema(ma.Schema):
     """ schema """
+
     class Meta:
         fields = ('party_id', 'item_id', 'item_name', 'date_receipt', 'cost', 'quantity')
 
@@ -287,6 +512,33 @@ class BalanceItemSchema(ma.Schema):
 # Schema's initializing
 balance_item_schema = BalanceItemSchema()
 balance_items_schema = BalanceItemSchema(many=True)
+
+
+# class Product(db.Model):
+#     """ --- TEST ---"""
+#     __tablename__ = 'product'
+#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     code = db.Column(db.String(10), nullable=False)
+#     name = db.Column(db.String(70), nullable=False)
+#     price = db.Column(db.Float, nullable=False, default=0)
+#     warehouse = db.Column(db.Integer, nullable=False)
+#     comment = db.Column(db.String(100), nullable=True)
+#
+#     def __repr__(self):
+#         return f"Product {self.code}, item {self.name}"
+#
+# class ProductSchema(ma.Schema):
+#     """ schema """
+#
+#     class Meta:
+#         fields = ('id', 'code', 'name', 'price', 'warehouse', 'comment')
+#
+# # Schema's initializing
+# product_schema = ProductSchema()
+# products_schema = ProductSchema(many=True)
+
+
+
 
 """
     release_date = db.Column(db.Date, index=True, nullable=False)
