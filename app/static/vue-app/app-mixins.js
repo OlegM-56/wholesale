@@ -583,7 +583,7 @@ var paginator_server = {
             return appDataset[this.instance]['pk']
         else
             return 'id'
-    },
+    }
 
   },
 
@@ -829,6 +829,21 @@ var edit_invoce = {
     ID: function () {
       return this.getRouteParam('id')
     },
+    // --  статус документу:  true - накладна проведена
+    confirmed: function () {
+      return this.data.doc_status==1
+    },
+    // --  доступ до редагування накладної:  якщо проведено - не можна редагувати
+    isEdit: function () {
+      return !this.confirmed
+    },
+    editActions() {
+      // Повертаємо масив дій для режиму редагування
+      return [
+        { name: 'edit', caption: '', title: 'Змінити', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900' },
+        { name: 'delete', caption: '', title: 'Видалити', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900' }
+      ];
+    }
   },
   mounted: function() {
     this.init()
@@ -849,13 +864,16 @@ var edit_invoce = {
               this.data = response
             },
             (errors) => {
-              this.show_error(errors)
+              this.show_error(errors.errors)
             }
           );
       }
+      //  новий документ
+      else {
+          this.data.doc_status = 0
+      }
       // --- завантаження даних для вибору в формі
       this.load_ext_data()
-
       // --- завантаження даних по рядкам накладної
       this.load_detail_data(row)
     },
@@ -880,7 +898,7 @@ var edit_invoce = {
               app.notify({type: 'success', message: 'Зміни в документі збережено'})
             },
             (errors)=> {
-              this.show_error(errors)
+              this.show_error(errors.errors)
             })
             this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
           }
@@ -903,7 +921,7 @@ var edit_invoce = {
           app.notify({type: 'success', message: 'Документ проведено'})
         },
         (errors)=> {
-          this.show_error(errors)
+          this.show_error(errors.errors)
         })
         this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
       }

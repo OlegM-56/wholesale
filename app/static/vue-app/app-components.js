@@ -37,7 +37,10 @@ Vue.component('standard-table', {
   <u-tr v-for="row in rows" @click="$emit('select', row)" :class="current_row==row?'bg-dark text-white':''">
     <u-td v-for="field in fields" :label="field.title" v-html="$options.filters.colorTheFound(formatField(field.type, row[field.name]), search)"></u-td>
     <u-td v-if="actions">
-        <a v-for="action in actions" @click="doAction(action, row)" :title="action.title" class="mr-1"><span :class="action.class">{{action.caption}}</span></a>
+      <template v-for="action in actions">
+        <!-- не виводимо кнопку  "delete" для проведених документів -->
+        <a v-if="action.action !='delete' || !row.doc_status || row.doc_status == 0" @click="doAction(action, row)" :title="action.title" class="mr-1"><span :class="action.class">{{action.caption}}</span></a>
+      </template>
     </u-td>
   </u-tr>
   </u-table>
@@ -45,6 +48,7 @@ Vue.component('standard-table', {
 </div>
 `
 })
+
 
 Vue.component('form-field', {
   /*
@@ -74,18 +78,22 @@ Vue.component('form-field', {
   <div v-if="field.type=='label'" :id="'field_'+field.name">{{value}}</div>
   <div v-if="field.type=='html'" v-html="value"></div>
 
-  <input v-if="field.type=='mydate'" type="date" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :required="field.required" autocomplete="off">
+  <input v-if="field.type=='mydate'" type="date" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()"
+  :required="field.required" autocomplete="off" :readonly="field.readonly">
 
-  <input v-if="field.type=='string'" type="text" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
+  <input v-if="field.type=='string'" type="text" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()"
+  :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern" :readonly="field.readonly">
   <input v-if="field.type=='email'" type="email" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
   <input v-if="field.type=='password'" type="password" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
   <input v-if="field.type=='tel'" type="tel" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
   <input v-if="field.type=='url'" type="url" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
 
   <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
-  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
+  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control"
+  v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
 
-  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
+  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :readonly="field.readonly" :required="field.required"><option v-for="item in field.items"
+  :value="item.value">{{item.caption}}</option></select>
 
   <div v-if="field.type=='checkbox'" class="form-check">
     <input :checked="value == true" @change="$emit('input', $event.target.checked)" :id="'field_'+field.name" type="checkbox" class="form-check-input">
@@ -280,25 +288,23 @@ Vue.component('invoce-edit', {
     <invoice-form
       :data=data
       :fields=form_fields
+      :confirmed=confirmed
       :actions="[
-          {name:'submit', title: 'Зберегти', action: 'Save', class: '', dafault: true},
+          {name:'submit', title: 'Зберегти', action: 'Save', class: '', dafault: true, disabled: confirmed},
           {name:'cancel', title: 'Cancel', action: 'Cancel', class: ''},
-          {name:'confirm', title: 'Провести документ', action: 'confirm', class: '', disabled: false}
+          {name:'confirm', title: confirmed ? 'Скасувати проведення' : 'Провести документ', action: 'confirm', class: ''}
       ]"
       @action="doAction($event)"
     />
 
     <!-- --- Рядки накладної --- -->
-    <button @click="addRowDetail()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
+      <button v-if="!confirmed" @click="addRowDetail()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
 
     <standard-table
       :fields=detail_fields
       :rows=detail_data
       :current_row="current_row"
-      :actions="[
-          {name:'edit', caption:'', title: 'Змінити', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900'},
-          {name:'delete', caption:'', title: 'Видалити', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900'}
-      ]"
+      :actions="isEdit ? editActions : ''"
 
       @select="selectRowDetail($event)"
       @edit="editRowDetail($event)"

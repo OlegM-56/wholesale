@@ -26,7 +26,7 @@ def create_data(model):
     """
     data_json = request.get_json()
     if not data_json:
-        return jsonify([{'error': f"Дані для створення нового запису в моделі {model} не передано!"}]), 404
+        return jsonify({'errors': [f"Дані для створення нового запису в моделі {model} не передано!"]}), 404
     # Десеріалізуємо дані з JSON згідно схеми
     request_data = Models[model]['schema'].load(data_json)
     #  видаляємо невизначені поля
@@ -48,7 +48,7 @@ def create_data(model):
     except Exception as e:
         # відкат при помилці
         db.session().rollback()
-        return jsonify({'errors': ['Can not create', str(e)]}), 409
+        return jsonify({'errors': ['Запис не було створено!', str(e)]}), 409
 
 
 ##############################
@@ -167,7 +167,7 @@ def get_data(model, pk='', options=None):
             if record_count:
                 json_data.append(record_count)
     else:
-        json_data = jsonify({'error': f"Невідома модель {model}"})
+        json_data = jsonify({'errors': [f"Невідома модель {model}"]})
 
     return json.dumps(json_data)
 
@@ -273,18 +273,14 @@ def update_data(model, pk):
     """
     data_json = request.get_json()
     if not data_json:
-        return jsonify([{'error': f"Дані для оновлення запису з pk={pk} в моделі {model} не передано!"}]), 404
+        return jsonify({'errors': [f"Дані для оновлення запису з pk={pk} в моделі {model} не передано!"]}), 404
     # пошук запису для оновлення
     data = Models[model]['class'].query.get(pk)
     if not data:
-        return jsonify([{'error': f"Запис з pk={pk} в моделі {model} не знайдено!"}]), 404
+        return jsonify({'errors': [f"Запис з pk={pk} в моделі {model} не знайдено!"]}), 404
     try:
         # Десеріалізуємо дані з JSON згідно схеми
         data_new = Models[model]['schema'].load(data_json)
-
-        #  -- якщо існує метод з іменем "before_update" у класі, виконуємо
-        if 'before_update' in dir(Models[model]['class']):
-            Models[model]['class'].before_update(data, data_new)
 
         # дані з data_new копіюємо до відповідних атрибутів об'єкту data
         for field in data_new:
@@ -297,7 +293,8 @@ def update_data(model, pk):
         # Відкат у випадку помилки
         db.session.rollback()
         print(f"Помилка: {e}")
-        return jsonify([{'error': f"Помилка коригування запису з pk={pk} в моделі {model}!"}]), 500
+        return jsonify({'errors': [f'Помилка коригування запису з pk={pk} в моделі {model}!', str(e)]}), 500
+
 
 ##############################
 # Delete
@@ -306,18 +303,22 @@ def update_data(model, pk):
 def delete_data(model, pk):
     row = Models[model]['class'].query.get(pk)
     if not row:
-        return jsonify([{'error': f"Запис з pk={pk} в моделі {model} не знайдено!"}]), 404
-    #  якщо існує спеціальний метод виделення (наприклад для накладних)
-    if 'delete_row' in dir(Models[model]['class']):
-        if not Models[model]['class'].delete_row(row):
-            return jsonify([{'error': f"Помилка видалення запису з pk={pk} в моделі {model}!"}]), 404
-
-    #  звичайне видалення рядка таблиці
-    else:
+        return jsonify({'errors': [f"Запис з pk={pk} в моделі {model} не знайдено!"]}), 404
+    try:
+        # --- якщо існує спеціальний метод виделення (наприклад для накладних)
+        if 'delete_row' in dir(Models[model]['class']):
+            Models[model]['class'].delete_row(row)
+        #  --- видаляємо рядок таблиці
         db.session.delete(row)
+        # Зберігаємо зміни в базі даних
         db.session.commit()
 
-    return jsonify([{'OK': f"Запис з pk={pk} в моделі {model} видалено!"}]), 200
+        return jsonify({'OK': [f"Запис з pk={pk} в моделі {model} видалено!"]}), 200
+    except Exception as e:
+        # Відкат у випадку помилки
+        db.session.rollback()
+        print(f"Помилка: {e}")
+        return jsonify({'errors': [str(e)]}), 500
 
 
 ##############################
@@ -333,16 +334,13 @@ def confirm_doc(model, pk):
     """
     #  -- якщо не існує метод з іменем "confirm" у класі, то виходимо з помилкою
     if 'confirm' not in dir(Models[model]['class']):
-        return jsonify([{'error': f"Немає методу проведення документу для моделі {model} !"}]), 404
+        return jsonify({'errors': [f"Немає методу проведення документу для моделі {model} !"]}), 404
 
     #  -- якщо існує метод з іменем "confirm" у класі, то виконуємо
-    data_json = request.get_json()
-    if not data_json:
-        return jsonify([{'error': f"Дані для обробки запису з pk={pk} в моделі {model} не передано!"}]), 404
     # пошук запису для оновлення
     data = Models[model]['class'].query.get(pk)
     if not data:
-        return jsonify([{'error': f"Запис з pk={pk} в моделі {model} не знайдено!"}]), 404
+        return jsonify({'errors': [f"Запис з pk={pk} в моделі {model} не знайдено!"]}), 404
     try:
         # запускаємо проведення
         Models[model]['class'].confirm(data)
@@ -353,7 +351,7 @@ def confirm_doc(model, pk):
         # Відкат у випадку помилки
         db.session.rollback()
         print(f"Помилка: {e}")
-        return jsonify([{'error': f"Помилка коригування запису з pk={pk} в моделі {model}!"}]), 500
+        return jsonify({'errors': [str(e)]}), 500
 
 
 

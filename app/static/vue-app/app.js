@@ -211,8 +211,8 @@ const appDataset = {
         {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
         {name:'customer_id', 'title': 'Постачальник', type:'select', dataset: {src: 'client', value: 'id', caption: 'customer_name'}, required:true},
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', required:'required'},
-        {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
-        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate'},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', sort:true, readonly:true},
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
         {name:'custom_numdoc', 'title': 'Номер документу постачальника', type:'string'},
       ]
     }
@@ -236,7 +236,7 @@ const appDataset = {
       'form': [
         {name:'id', 'title': 'Код рядка', type:'number', readonly:true},
         {name:'pinvoice_id', 'title': 'Код накладної', type:'number', readonly:true},
-        {name:'npp', 'title': '№ пп', type:'number'},
+        {name:'npp', 'title': '№ пп', type:'number', readonly:true},
         {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
         {name:'price', 'title': 'Ціна', type:'number', required:true},
         {name:'quantity', 'title': 'Кількість', type:'number', required:true}
@@ -262,10 +262,11 @@ const appDataset = {
       ],
       'form': [
         {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
-        {name:'customer_id', 'title': 'Отримувач', type:'select', dataset: {src: 'client', value: 'id', caption: 'customer_name'}, required:true},
+        {name:'customer_id', 'title': 'Отримувач', type:'select', dataset: {src: 'client', value: 'id', caption: 'customer_name'} },
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', required:'required'},
-        {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
-        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate'},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
+      //  {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
       ]
     }
   },
@@ -288,7 +289,7 @@ const appDataset = {
       'form': [
         {name:'id', 'title': 'Код рядка', type:'number', readonly:true},
         {name:'einvoice_id', 'title': 'Код накладної', type:'number', readonly:true},
-        {name:'npp', 'title': '№ пп', type:'number'},
+        {name:'npp', 'title': '№ пп', type:'number', readonly:true},
         {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
         {name:'price', 'title': 'Ціна', type:'number', required:true},
         {name:'quantity', 'title': 'Кількість', type:'number', required:true}

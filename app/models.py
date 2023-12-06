@@ -183,39 +183,20 @@ class Pinvoice(db.Model):
     @staticmethod
     def delete_row(row):
         """ метод для коректного видалення рядків накладної на самої накладної"""
-        try:
-            # row - документ Pinvoice для видалення
-            if row is not None:
-                # Видаляємо всі рядки документу Pinvoice
-                PinvoiceRow.query.filter_by(pinvoice_id=row.num_doc).delete()
-                # Видаляємо сам документ Pinvoice
-                db.session.delete(row)
-                # Зберігаємо зміни в базі даних
-                db.session.commit()
-                return True
-            else:
-                return False
-        except Exception as e:
-            print('error"', str(e))
-            return False
+        # row - документ Pinvoice для видалення
+        if row is not None:
+            # Видаляємо всі рядки документу Pinvoice
+            PinvoiceRow.query.filter_by(pinvoice_id=row.num_doc).delete()
 
     @staticmethod
     def confirm(data):
-        """ метод для проведення накладної """
-        try:
-            # data - документ Pinvoice для проведення
-            data.doc_date_approve = date.today()
-            data.doc_status = 1
-            # # Видаляємо всі рядки документу Pinvoice
-            # PinvoiceRow.query.filter_by(pinvoice_id=row.num_doc).delete()
-            # # Видаляємо сам документ Pinvoice
-            # db.session.delete(row)
-            # # Зберігаємо зміни в базі даних
-            # db.session.commit()
-            return True
-        except Exception as e:
-            print('error"', str(e))
-            return False
+        """  ---- метод для проведення накладної ----
+        data - документ Pinvoice для проведення
+        """
+        # Знаходимо всі рядки документу Pinvoice
+        rows = PinvoiceRow.query.filter_by(pinvoice_id=data.num_doc).all()
+        #  запускаємо метод проведення документу та повертаємо результат проведення
+        return BalanceItem.update_balance(adding=True, doc=data, rows=rows)
 
 
 class PinvoiceSchema(ma.Schema):
@@ -271,14 +252,6 @@ class PinvoiceRow(db.Model):
     def __repr__(self):
         return f"Pinvoice_row Doc N {self.pinvoice}, npp {self.npp}"
 
-    @staticmethod
-    def before_update(row_old, row_new):
-        """ метод для коригування рядків накладної:
-            якщо накладна проведена, то зміни кількості в рядку змінюють залишки по партіях в моделі BalanceItem
-            для цього викликається метод  BalanceItem.update_balance, якому передаються старі дані рядка та нові дангі рядка накладної
-        """
-        BalanceItem.update_balance(True, row_old, row_new)
-
 
 class PinvoiceRowSchema(ma.Schema):
     """ schema """
@@ -330,21 +303,20 @@ class Einvoice(db.Model):
     @staticmethod
     def delete_row(row):
         """ метод для коректного видалення рядків накладної на самої накладної"""
-        try:
-            # row - документ Pinvoice для видалення
-            if row is not None:
-                # Видаляємо всі рядки документу Pinvoice
-                EinvoiceRow.query.filter_by(einvoice_id=row.num_doc).delete()
-                # Видаляємо сам документ Pinvoice
-                db.session.delete(row)
-                # Зберігаємо зміни в базі даних
-                db.session.commit()
-                return True
-            else:
-                return False
-        except Exception as e:
-            print('error"', str(e))
-            return False
+        # row - документ Pinvoice для видалення
+        if row is not None:
+            # Видаляємо всі рядки документу Pinvoice
+            EinvoiceRow.query.filter_by(einvoice_id=row.num_doc).delete()
+
+    @staticmethod
+    def confirm(data):
+        """  ---- метод для проведення накладної ----
+        data - документ Einvoice для проведення
+        """
+        # Знаходимо всі рядки документу Einvoice
+        rows = EinvoiceRow.query.filter_by(einvoice_id=data.num_doc).all()
+        #  запускаємо метод проведення документу та повертаємо результат проведення
+        return BalanceItem.update_balance(adding=False, doc=data, rows=rows)
 
 class EinvoiceSchema(ma.Schema):
     """ schema """
@@ -413,28 +385,30 @@ einvoice_row_schema = EinvoiceRowSchema()
 einvoice_rows_schema = EinvoiceRowSchema(many=True)
 
 
-# class WarehouseOrderRow(db.Model):
-#     """ --- рядки складського ордеру (списання залишків по партіях) ---"""
-#     __tablename__ = 'warehouse_order_row'
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     einvoice_row = db.Column(db.Integer, db.ForeignKey('einvoice_row.id'), nullable=False)
-#     quantity = db.Column(db.Float, nullable=False, default=0)
-#     cost = db.Column(db.Float, nullable=False, default=0)
-#
-#     def __repr__(self):
-#         return f"Warehouse_order_row id {self.id}, einvoice_row {self.einvoice_row}"
+class WarehouseOrderRow(db.Model):
+    """ --- рядки складського ордеру для списання залишків по партіях ---"""
+    __tablename__ = 'warehouse_order_row'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    einvoice_row_id = db.Column(db.Integer, db.ForeignKey('einvoice_row.id'), name='fk_einvoice_row_order', nullable=False)
+    einvoice_row = relationship('EinvoiceRow', backref='einvoice_row_order')
+    party_id = db.Column(db.Integer, db.ForeignKey('balance_item.party_id'), name='fk_balance_order_row', nullable=False)
+    balance_item = relationship('BalanceItem', backref='balance_order_row')
+    quantity = db.Column(db.Float, nullable=False, default=0)
 
-#
-# class WarehouseOrderRowSchema(ma.Schema):
-#     """ schema """
-#
-#     class Meta:
-#         fields = ('id', 'einvoice', 'npp', 'item', 'quantity', 'price')
-#
-#
-# # Schema's initializing
-# warehouse_order_row_schema = WarehouseOrderRowSchema()
-# warehouse_order_rows_schema = WarehouseOrderRowSchema(many=True)
+    def __repr__(self):
+        return f"Warehouse_order_row id {self.id}, einvoice_row {self.einvoice_row}"
+
+
+class WarehouseOrderRowSchema(ma.Schema):
+    """ schema """
+
+    class Meta:
+        fields = ('id', 'einvoice_row_id', 'party_id', 'quantity')
+
+
+# Schema's initializing
+warehouse_order_row_schema = WarehouseOrderRowSchema()
+warehouse_order_rows_schema = WarehouseOrderRowSchema(many=True)
 
 
 class BalanceItem(db.Model):
@@ -465,48 +439,114 @@ class BalanceItem(db.Model):
             field = getattr(BalanceItem, field_name, None)
         return field
 
+    # ============ Коригування залишків при проведенні накладних ========
     @staticmethod
-    def update_balance(adding, row_old, row_new):
-        """ якщо накладна проведена, то зміни кількості в рядку змінюють залишки по партіях в моделі BalanceItem
-            для цього викликається метод  BalanceItem.update_balance, якому передаються старі дані рядка та нові дангі рядка накладної
+    def update_balance(adding, doc, rows):
+        """ ------   Алгоритм проведення накладних --------
+            В сеансі накладних є кнопка Провести документ та Скасувати проведення, обробляється цим методом.
+            - Аналізуємо поточне поле doc_status в накладній:  якщо = 0, то документ треба Провести,
+            якщо = 1, то треба відмінити Проведення документу.
+            Аналізуємо тип накладної:  Прибуткова чи Видаткова
+            На основі цих параметрів запускаемо метод проведення
+            ! Принцип:
+            Ми робимо Проведення всього документу та Скасування проведення всього документу !!!
+            Коригування рядків в проведеному документі не дозволяється!
+            Для коригування робимо Скасування, коригуємо та знову Проводимо
+            ! Якщо при Проведенні або Скасування баланс по партії стає менше 0, то вся операція скасовується!
+
         """
-        # ------- Надходження товару на склад -------
+        # !! Якщо у документу немає рядків - повертаємо помилку
+        if not rows:
+            raise ValueError(f"Немає рядків у документі № {doc.num_doc}!")
+
+        # проведення чи скасування проведення
+        confirm = doc.doc_status ^ 1
+        # Дата партії = doc_date_approve, якщо воно заповнене, або поточна дата
+        date_party = doc.doc_date_approve if doc.doc_date_approve else date.today()
+
+        ''' ---- проходимо по всіх рядках документу та правимо баланс по партіях
+            надходження товару на склад - шукаємо/формуємо партію по item_id+date_party+ціна закупки
+
+            Видаткові накладні обробляються так:
+            Проведення:
+              - на кожен рядок накладної формується один або більше рядків складського ордеру, 
+                в якому зазначається, з залишків якої партії іде списання;
+                алгоритм FIFO:  
+                   шукаємо всі партії по товару, сортуємо їх по зростанню дати партії
+                   беремо першу партію в перший рядок складського ордеру - якщо вистачає кількості, то завершуємо,
+                   якщо кількості не вистачило для покриття кількості в рядку накладної - беремо наступну партію и т.д.
+              - коригування балансу по партіях проводиться по рядках складського ордеру
+            Скасування проведення:
+              - проходимо по рядкам складських ордерів, коригуємо баланс по партіях та видаляємо рядки складських ордерів
+              
+        '''
+        # --- Надходження товару на склад - Прибуткові накладні -----
         if adding:
-            # -- шукаємо партію по старих даних
-            old_party = None
-            #  дата проведення накладної
-            date_receipt_old = Pinvoice.query.get(row_old.pinvoice_id).doc_date_approve
-            if date_receipt_old:
-                old_party = BalanceItem.query.filter_by(
-                    item_id=row_old.item_id, date_receipt=date_receipt_old, cost=row_old.price
-                ).first()
+            for row in rows:
+                # якщо це послуга - пропускаємо
+                if row.item.service: continue
+                # шукаємо партію по даних рядка
+                party = BalanceItem.query.filter_by(item_id=row.item_id, date_receipt=date_party, cost=row.price).first()
+                #  якщо немає партії - створюємо
+                if not party:
+                    party = BalanceItem(item_id=row.item_id, date_receipt=date_party, cost=row.price, quantity=0)
+                    db.session.add(party)
+                #  коригуємо баланс
+                party.quantity = party.quantity + row.quantity if confirm else party.quantity - row.quantity
+                if party.quantity < 0:
+                    raise ValueError(f"По товару з кодом {row.item_id} утворюється від'ємний залишок!")
 
-            # -- шукаємо партію по нових даних
-            new_party = None
-            #  дата проведення накладної
-            date_receipt_new = Pinvoice.query.get(row_new['pinvoice_id']).doc_date_approve
-            if date_receipt_new:
-                #  нова та стара партія - однакові
-                if (old_party and
-                        row_new['item_id'] == row_old.item_id and date_receipt_new == date_receipt_old and row_new['price'] == row_old.price):
-                    new_party = old_party
+
+        # --- Вибуття товару зі складу - Видаткові накладні -----
+        else:
+            # ------  Проходимо по рядкам накладної
+            for row in rows:
+                # якщо це послуга - пропускаємо
+                if row.item.service: continue
+                # --- якщо це проведення
+                if confirm:
+                    # шукаємо партії з залишком > 0 для товару з рядка
+                    parties = (BalanceItem.query.filter(BalanceItem.item_id == row.item_id, BalanceItem.quantity > 0).
+                             order_by(BalanceItem.date_receipt).all())
+                    #  якщо немає партії - видаємо помилку та завершуемо !
+                    if not parties:
+                        raise ValueError(f"Не знайдено залишків товару з кодом {row.item_id} !")
+                    #  формуємо рядки складських ордерів
+                    quantity_row = row.quantity
+                    for party in parties:
+                        #  доступна кількість на залишку партій
+                        quantity_order = quantity_row if party.quantity >= quantity_row else party.quantity
+                        # створюємо рядок ордеру
+                        new_order_row = WarehouseOrderRow(einvoice_row_id=row.id, party_id=party.party_id, quantity=quantity_order)
+                        db.session.add(new_order_row)
+                        #  коригуємо баланс по партії
+                        party.quantity = party.quantity - quantity_order
+                           #  контроль кількості
+                        quantity_row -= quantity_order
+                        if quantity_row == 0: break
+                    # якщо не вистачило залишків
+                    if quantity_row > 0:
+                        raise ValueError(f"Не вистачило залишків товару з кодом {row.item_id} !")
+
+                # --- якщо це скасування проведення
                 else:
-                    # інакше -  шукаємо партію по нових даних
-                    new_party = BalanceItem.query.filter_by(
-                        item_id=row_new['item_id'], date_receipt=date_receipt_new, cost=row_new['price']
-                    ).first()
-                #  якщо немає нової партії - створюємо
-                if not new_party:
-                    new_party = BalanceItem(item_id=row_new['item_id'], date_receipt=date_receipt_new, cost=row_new['price'], quantity=0)
-                    db.session.add(new_party)
+                    # шукаємо рядки складських ордерів по рядку накладної
+                    rows_order = WarehouseOrderRow.query.filter_by(einvoice_row_id=row.id)
+                    for row_o in rows_order.all():
+                        # шукаємо партію по даних рядка
+                        party = BalanceItem.query.get(row_o.party_id)
+                        #  якщо є партія коригуємо баланс
+                        if party:
+                            party.quantity = party.quantity + row_o.quantity
+                    # видаляємо рядки складських ордерів по рядку накладної
+                    WarehouseOrderRow.query.filter_by(einvoice_row_id=row.id).delete()
 
-            # ----- Віднімаємо кількість від старої партії
-            if old_party:
-                old_party.quantity = old_party.quantity - row_old.quantity
-                if old_party.quantity < 0:  old_party.quantity = 0
-            # ----- Додаємо кількість до нової партії
-            if new_party:
-                new_party.quantity = new_party.quantity + float(row_new['quantity'])
+        # --- вносимо зміни в заголовок документу
+        if not doc.doc_date_approve:
+            doc.doc_date_approve = date_party
+        doc.doc_status = confirm
+
+        return True
 
 
 class BalanceItemSchema(ma.Schema):
@@ -531,30 +571,6 @@ class BalanceItemSchema(ma.Schema):
 # Schema's initializing
 balance_item_schema = BalanceItemSchema()
 balance_items_schema = BalanceItemSchema(many=True)
-
-
-# class Product(db.Model):
-#     """ --- TEST ---"""
-#     __tablename__ = 'product'
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     code = db.Column(db.String(10), nullable=False)
-#     name = db.Column(db.String(70), nullable=False)
-#     price = db.Column(db.Float, nullable=False, default=0)
-#     warehouse = db.Column(db.Integer, nullable=False)
-#     comment = db.Column(db.String(100), nullable=True)
-#
-#     def __repr__(self):
-#         return f"Product {self.code}, item {self.name}"
-#
-# class ProductSchema(ma.Schema):
-#     """ schema """
-#
-#     class Meta:
-#         fields = ('id', 'code', 'name', 'price', 'warehouse', 'comment')
-#
-# # Schema's initializing
-# product_schema = ProductSchema()
-# products_schema = ProductSchema(many=True)
 
 
 
