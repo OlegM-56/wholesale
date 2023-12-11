@@ -351,7 +351,10 @@ def confirm_doc(model, pk):
         # Відкат у випадку помилки
         db.session.rollback()
         print(f"Помилка: {e}")
-        return jsonify({'errors': [str(e)]}), 500
+        if isinstance(e.args[0], list):
+            return jsonify({'errors': e.args[0]}), 500
+        else:
+            return jsonify({'errors': [str(e)]}), 500
 
 
 

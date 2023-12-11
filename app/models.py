@@ -257,11 +257,17 @@ class PinvoiceRowSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('id', 'pinvoice_id', 'npp', 'item_id', 'item_name', 'quantity', 'price')
+        fields = ('id', 'pinvoice_id', 'npp', 'item_id', 'item_name', 'unit', 'quantity', 'price')
 
     item_name = fields.Function(
         # витягнути ім'я товару
         serialize=lambda obj: obj.item.item_name if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    unit = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.unit if obj is not None and obj.item else '',
         # пропустити ім'я товару при десеріалізації
         deserialize=lambda value: None
     )
@@ -371,11 +377,17 @@ class EinvoiceRowSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('id', 'einvoice_id', 'npp', 'item_id', 'item_name', 'quantity', 'price')
+        fields = ('id', 'einvoice_id', 'npp', 'item_id', 'item_name', 'unit', 'quantity', 'price')
 
     item_name = fields.Function(
         # витягнути ім'я товару
         serialize=lambda obj: obj.item.item_name if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    unit = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.unit if obj is not None and obj.item else '',
         # пропустити ім'я товару при десеріалізації
         deserialize=lambda value: None
     )
@@ -461,8 +473,8 @@ class BalanceItem(db.Model):
 
         # проведення чи скасування проведення
         confirm = doc.doc_status ^ 1
-        # Дата партії = doc_date_approve, якщо воно заповнене, або поточна дата
-        date_party = doc.doc_date_approve if doc.doc_date_approve else date.today()
+        # Дата проведення = doc_date_approve, якщо воно заповнене, або поточна дата
+        date_approve = doc.doc_date_approve if doc.doc_date_approve else date.today()
 
         ''' ---- проходимо по всіх рядках документу та правимо баланс по партіях
             надходження товару на склад - шукаємо/формуємо партію по item_id+date_party+ціна закупки
@@ -472,7 +484,8 @@ class BalanceItem(db.Model):
               - на кожен рядок накладної формується один або більше рядків складського ордеру, 
                 в якому зазначається, з залишків якої партії іде списання;
                 алгоритм FIFO:  
-                   шукаємо всі партії по товару, сортуємо їх по зростанню дати партії
+                   шукаємо всі партії по товару, для яких Дата приходу <= Дата проведення 
+                   сортуємо їх по зростанню Дати приходу
                    беремо першу партію в перший рядок складського ордеру - якщо вистачає кількості, то завершуємо,
                    якщо кількості не вистачило для покриття кількості в рядку накладної - беремо наступну партію и т.д.
               - коригування балансу по партіях проводиться по рядках складського ордеру
@@ -480,22 +493,22 @@ class BalanceItem(db.Model):
               - проходимо по рядкам складських ордерів, коригуємо баланс по партіях та видаляємо рядки складських ордерів
               
         '''
+        error_message = []
         # --- Надходження товару на склад - Прибуткові накладні -----
         if adding:
             for row in rows:
                 # якщо це послуга - пропускаємо
                 if row.item.service: continue
-                # шукаємо партію по даних рядка
-                party = BalanceItem.query.filter_by(item_id=row.item_id, date_receipt=date_party, cost=row.price).first()
+                # шукаємо партію по даних рядка документу
+                party = BalanceItem.query.filter_by(item_id=row.item_id, date_receipt=date_approve, cost=row.price).first()
                 #  якщо немає партії - створюємо
                 if not party:
-                    party = BalanceItem(item_id=row.item_id, date_receipt=date_party, cost=row.price, quantity=0)
+                    party = BalanceItem(item_id=row.item_id, date_receipt=date_approve, cost=row.price, quantity=0)
                     db.session.add(party)
                 #  коригуємо баланс
                 party.quantity = party.quantity + row.quantity if confirm else party.quantity - row.quantity
                 if party.quantity < 0:
-                    raise ValueError(f"По товару з кодом {row.item_id} утворюється від'ємний залишок!")
-
+                    error_message.append(f"По товару '{row.item.item_name}' утворюється від'ємний залишок = {party.quantity}!")
 
         # --- Вибуття товару зі складу - Видаткові накладні -----
         else:
@@ -506,11 +519,16 @@ class BalanceItem(db.Model):
                 # --- якщо це проведення
                 if confirm:
                     # шукаємо партії з залишком > 0 для товару з рядка
-                    parties = (BalanceItem.query.filter(BalanceItem.item_id == row.item_id, BalanceItem.quantity > 0).
-                             order_by(BalanceItem.date_receipt).all())
+                    parties = (BalanceItem.query.filter(
+                                BalanceItem.item_id == row.item_id,
+                                BalanceItem.quantity > 0,
+                                BalanceItem.date_receipt <= date_approve
+                              ).order_by(BalanceItem.date_receipt).all())
                     #  якщо немає партії - видаємо помилку та завершуемо !
                     if not parties:
-                        raise ValueError(f"Не знайдено залишків товару з кодом {row.item_id} !")
+                        error_message.append(f"Не знайдено залишків товару {row.item.item_name}  у кількості {row.quantity} "
+                                             f"на дату {date_approve.strftime('%d.%m.%Y')} !")
+                        continue
                     #  формуємо рядки складських ордерів
                     quantity_row = row.quantity
                     for party in parties:
@@ -521,12 +539,13 @@ class BalanceItem(db.Model):
                         db.session.add(new_order_row)
                         #  коригуємо баланс по партії
                         party.quantity = party.quantity - quantity_order
-                           #  контроль кількості
+                        #  контроль кількості
                         quantity_row -= quantity_order
                         if quantity_row == 0: break
                     # якщо не вистачило залишків
                     if quantity_row > 0:
-                        raise ValueError(f"Не вистачило залишків товару з кодом {row.item_id} !")
+                        error_message.append(f"Не вистачило залишків товару {row.item.item_name} у кількості {quantity_row}"
+                                             f" на дату {date_approve.strftime('%d.%m.%Y')} !")
 
                 # --- якщо це скасування проведення
                 else:
@@ -540,10 +559,13 @@ class BalanceItem(db.Model):
                             party.quantity = party.quantity + row_o.quantity
                     # видаляємо рядки складських ордерів по рядку накладної
                     WarehouseOrderRow.query.filter_by(einvoice_row_id=row.id).delete()
+        #  -- генеруємо помилку, якщо є
+        if error_message:
+            raise ValueError(error_message)
 
         # --- вносимо зміни в заголовок документу
         if not doc.doc_date_approve:
-            doc.doc_date_approve = date_party
+            doc.doc_date_approve = date_approve
         doc.doc_status = confirm
 
         return True
@@ -553,17 +575,22 @@ class BalanceItemSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('party_id', 'item_id', 'item_name', 'date_receipt', 'cost', 'quantity')
+        fields = ('party_id', 'item_id', 'item_name', 'unit', 'date_receipt', 'cost', 'quantity')
 
     date_receipt = fields.Function(
         # дата в строку
         serialize=lambda obj: obj.date_receipt.strftime('%Y-%m-%d') if obj is not None else '',
         # строка в дату
         deserialize=lambda value: datetime.strptime(value, '%Y-%m-%d') if value else datetime(1900, 1, 1))
-
     item_name = fields.Function(
         # витягнути ім'я товару
         serialize=lambda obj: obj.item.item_name if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    unit = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.unit if obj is not None and obj.item else '',
         # пропустити ім'я товару при десеріалізації
         deserialize=lambda value: None
     )

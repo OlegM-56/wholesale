@@ -11,5 +11,5 @@ Models['pinvoice'] = {'class': Pinvoice, 'schema': pinvoice_schema, 'schemas': p
 Models['pinvoice_row'] = {'class': PinvoiceRow, 'schema': pinvoice_row_schema, 'schemas': pinvoice_rows_schema}
 Models['einvoice'] = {'class': Einvoice, 'schema': einvoice_schema, 'schemas': einvoices_schema}
 Models['einvoice_row'] = {'class': EinvoiceRow, 'schema': einvoice_row_schema, 'schemas': einvoice_rows_schema}
-# Models['warehouse_order_row'] = {'class': WarehouseOrderRow, 'schema': warehouse_order_row_schema, 'schemas': warehouse_order_rows_schema}
+Models['wh_order_row'] = {'class': WarehouseOrderRow, 'schema': warehouse_order_row_schema, 'schemas': warehouse_order_rows_schema}
 Models['balance-item'] = {'class': BalanceItem, 'schema': balance_item_schema, 'schemas': balance_items_schema}

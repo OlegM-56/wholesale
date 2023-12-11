@@ -210,9 +210,9 @@ var crud_ext = {
   },
   computed: {
     form_fields: function () {
+      //  форми
       let fields = appDataset[this.instance]['fields']['form']
       for (field of fields) {
-
         // Prepare @select fields
         if (field['type'] == 'select') {
           field.items = []
@@ -227,7 +227,6 @@ var crud_ext = {
             }
           }
         }
-
       }
       return fields
     }
@@ -284,7 +283,7 @@ var crud_detail = {
        if ( row.id > 0 ) {
           //  запит даних
           let field_main_id = appDataset[instance_detail]['main_id']  //  поле заголовка накладної
-          let url = appDataset[instance_detail]['url'] + '00/{"details":{"field":"'+ field_main_id +'","value":' + row.id.toString()+ '}, "order":["npp"]}'
+          let url = appDataset[instance_detail]['url'] + '00/{"details":{"field":"'+ field_main_id +'","value":' + row.id.toString()+ '},"order":["npp"]}'
           let options = {method: 'GET'}
           this.fetch_execute(url, options,
              (result) => {
@@ -593,6 +592,7 @@ var paginator_server = {
     this.search = ''
     this.init()
   },
+
   methods: {
     init: function() {
       this.instance = this.param_instance
@@ -788,7 +788,7 @@ var edit = {
           }
         }
         else {
-          app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')
+          app.alert('Фарма заповнена невірно! Перевірте!', '<i class="fas fa-times-circle text-danger"></i> Error')
         }
       }
       if ($event.action.name == 'cancel') {
@@ -837,13 +837,30 @@ var edit_invoce = {
     isEdit: function () {
       return !this.confirmed
     },
-    editActions() {
-      // Повертаємо масив дій для режиму редагування
+    editRowActions() {
+      // Повертаємо масив дій для режиму редагування рядків
       return [
         { name: 'edit', caption: '', title: 'Змінити', action: 'edit', class: 'fas fa-edit text-primary fa-icon-900' },
         { name: 'delete', caption: '', title: 'Видалити', action: 'delete', class: 'fas fa-eraser text-danger fa-icon-900' }
       ];
+    },
+    invoceActions() {
+      // Повертаємо масив дій для заголовку документу
+      arActions =[
+        {name:'submit', title:'Зберегти', action: 'Save', class: '', dafault:true, disabled: this.confirmed},
+        {name:'cancel', title:'Cancel', action: 'Cancel', class: ''},
+        {name:'confirm', title: this.confirmed ? 'Скасувати проведення' : 'Провести документ', action: 'confirm', class: ''}
+      ];
+      //  якщо є складський ордер
+      if (this.instance_wh_order) arActions.push( {name:'wh_order', title:'Складський ордер', action:'wh_order', class: '', disabled: !this.confirmed} )
+
+      return arActions
+    },
+    formReadonlyFields() {
+        // --  набір полів для форми без можливості редагування
+        return appDataset[this.instance]['fields']['form_readonly'];
     }
+
   },
   mounted: function() {
     this.init()
@@ -853,8 +870,10 @@ var edit_invoce = {
     init: function () {
       this.instance = this.instance_name
       this.instance_detail = appDataset[this.instance]['instance_detail']
-      store.commit('title', appDataset[this.instance]['title'])
+      this.instance_wh_order = appDataset[this.instance]['instance_wh_order']
       this.instance_url = appDataset[this.instance]['url']
+      this.pk = appDataset[this.instance]['pk']
+      store.commit('title', appDataset[this.instance]['title'])
       // --- завантаження даних по накладній
       let row = {id: this.ID}
       this.data = {}
@@ -914,16 +933,30 @@ var edit_invoce = {
       }
        //  --- Проведення накладної
       if ($event.action.name == 'confirm') {
-        //  this.$router.push('/'+ this.instance)
-        this.confirm_back(this.data,
-        (response)=> {
-          this.data = response
-          app.notify({type: 'success', message: 'Документ проведено'})
-        },
-        (errors)=> {
-          this.show_error(errors.errors)
+        question = this.confirmed ? 'Скасувати проведення документу ?' : 'Провести документ ?'
+        app.confirm(question).then(()=> {
+            this.confirm_back(this.data,
+            (response)=> {
+              this.data = response
+              app.notify({type: 'success', message: 'Документ проведено'})
+            },
+            (errors)=> {
+              this.show_error(errors.errors)
+            })
+            this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
+        }).catch( function () {
         })
-        this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
+      }
+      // --- складський ордер для видаткових накладних
+      if ($event.action.name == 'wh_order') {
+        if (this.instance_wh_order) {
+          let obj = {}
+          obj['details'] = {"field":this.pk, "value":this.ID}
+          obj['order'] = ["einvoice_row_id", "party_id"]
+          options = btoa(encodeURIComponent(JSON.stringify(obj)))
+        //{"details":{"field":"' +this.pk+ '","value":' +this.ID+ '},"order":["einvoice_row_id","party_id"]}')
+          app.navigate('/'+ this.instance_wh_order + '/prm/'+options)
+        }
       }
     },
     // --------- ПОМИЛКИ ------

@@ -58,7 +58,7 @@ const routes = [
     component: { template: '<implementation v-if="router.app.componentsReady(`implementation`)" />' },
     beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
   },
-  /*  Коригування накладних */
+  /*  Складський ордер */
 
   /*  Універсальні роути */
   { path: '/:instance', component: { template: '<instance-page />' } },
@@ -173,19 +173,22 @@ const appDataset = {
     'perpage': 10,
     'fields': {
       'table': [
-        {name:'party_id', 'title': 'Код партії', type:'number'},
+        {name:'party_id', 'title': 'Код партії', type:'number', sort:true},
         {name:'item_id', 'title': 'Код товару', type:'string', sort:true},
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
-        {name:'date_receipt', 'title': 'Дата партії', type:'mydate', sort:true},
+        {name:'date_receipt', 'title': 'Дата пприходу', type:'mydate', sort:true},
         {name:'cost', 'title': 'Ціна закупки', type:'number', sort:true},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string'},
         {name:'quantity', 'title': 'Залишок', type:'number', sort:true},
       ],
       'form': [
         {name:'party_id', 'title': 'Код партії', type:'number', readonly:true},
-        {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
-        {name:'date_receipt', 'title': 'Дата партії', type:'mydate', required:'required'},
-        {name:'cost', 'title': 'Ціна закупки', type:'number', required:true},
-        {name:'quantity', 'title': 'Залишок', type:'number', required:true},
+        {name:'item_id', 'title': 'Код товару', type:'string', readonly:true},
+        {name:'item_name', 'title': 'Назва товару', type:'string', readonly:true},
+        {name:'date_receipt', 'title': 'Дата приходу', type:'mydate', readonly:true},
+        {name:'cost', 'title': 'Ціна закупки', type:'number', readonly:true},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string', readonly:true},
+        {name:'quantity', 'title': 'Залишок', type:'number', readonly:true},
       ]
     }
   },
@@ -211,9 +214,17 @@ const appDataset = {
         {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
         {name:'customer_id', 'title': 'Постачальник', type:'select', dataset: {src: 'client', value: 'id', caption: 'customer_name'}, required:true},
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', required:'required'},
-        {name:'doc_status_name', 'title': 'Статус', type:'string', sort:true, readonly:true},
-        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate'},
         {name:'custom_numdoc', 'title': 'Номер документу постачальника', type:'string'},
+      ],
+      'form_readonly': [
+        {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
+       // {name:'customer_name', 'title': 'Постачальник', type:'string', readonly:true},
+        {name:'doc_date', 'title': 'Дата документу', type:'mydate', readonly:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
+        {name:'custom_numdoc', 'title': 'Номер документу постачальника', type:'string', readonly:true},
       ]
     }
   },
@@ -227,19 +238,20 @@ const appDataset = {
     'main_id': 'pinvoice_id',
     'fields': {
       'table': [
-        {name:'npp', 'title': '№ пп', type:'number'},
-        {name:'item_id', 'title': 'Код товару', type:'string'},
-        {name:'item_name', 'title': 'Назва товару', type:'string'},
-        {name:'price', 'title': 'Ціна', type:'number'},
-        {name:'quantity', 'title': 'Кількість', type:'number'}
+        {name:'npp', 'title':'№ пп', type:'number'},
+        {name:'item_id', 'title':'Код товару', type:'string'},
+        {name:'item_name', 'title':'Назва товару', type:'string'},
+        {name:'price', 'title':'Ціна', type:'number'},
+        {name:'unit', 'title':'Одиниця виміру', type:'string'},
+        {name:'quantity', 'title':'Кількість', type:'number'}
       ],
       'form': [
-        {name:'id', 'title': 'Код рядка', type:'number', readonly:true},
-        {name:'pinvoice_id', 'title': 'Код накладної', type:'number', readonly:true},
+        {name:'id', 'title':'Код рядка', type:'number', readonly:true},
+        {name:'pinvoice_id', 'title':'Код накладної', type:'number', readonly:true},
         {name:'npp', 'title': '№ пп', type:'number', readonly:true},
-        {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
-        {name:'price', 'title': 'Ціна', type:'number', required:true},
-        {name:'quantity', 'title': 'Кількість', type:'number', required:true}
+        {name:'item_id', 'title':'Товар', type:'select', dataset:{src: 'item', value:'id', caption:'item_name'}, required:true},
+        {name:'price', 'title':'Ціна', type:'number', min:0.01, step:0.01, required:true},
+        {name:'quantity', 'title':'Кількість', type:'number', min:0.001, step:0.001, required:true}
       ]
     }
   },
@@ -248,6 +260,7 @@ const appDataset = {
   'einvoice': {
     'instance': 'einvoice',
     'instance_detail': 'einvoice_row',
+    'instance_wh_order': 'wh_order_row',
     'url': 'http://localhost:5000/einvoice/',
     'title': 'Видаткові накладні',
     'pk': 'num_doc',
@@ -266,6 +279,13 @@ const appDataset = {
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', required:'required'},
         {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
       //  {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate'},
+      ],
+      'form_readonly': [
+        {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
+       // {name:'customer_name', 'title': 'Постачальник', type:'string', readonly:true},
+        {name:'doc_date', 'title': 'Дата документу', type:'mydate', readonly:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
         {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
       ]
     }
@@ -280,24 +300,42 @@ const appDataset = {
     'main_id': 'einvoice_id',
     'fields': {
       'table': [
-        {name:'npp', 'title': '№ пп', type:'number'},
-        {name:'item_id', 'title': 'Код товару', type:'string'},
-        {name:'item_name', 'title': 'Назва товару', type:'string'},
-        {name:'price', 'title': 'Ціна', type:'number'},
-        {name:'quantity', 'title': 'Кількість', type:'number'}
+        {name:'npp', 'title':'№ пп', type:'number'},
+        {name:'item_id', 'title':'Код товару', type:'string'},
+        {name:'item_name', 'title':'Назва товару', type:'string'},
+        {name:'price', 'title':'Ціна', type:'number'},
+        {name:'unit', 'title':'Одиниця виміру', type:'string'},
+        {name:'quantity', 'title':'Кількість', type:'number'}
       ],
       'form': [
-        {name:'id', 'title': 'Код рядка', type:'number', readonly:true},
-        {name:'einvoice_id', 'title': 'Код накладної', type:'number', readonly:true},
-        {name:'npp', 'title': '№ пп', type:'number', readonly:true},
-        {name:'item_id', 'title': 'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
-        {name:'price', 'title': 'Ціна', type:'number', required:true},
-        {name:'quantity', 'title': 'Кількість', type:'number', required:true}
+        {name:'id', 'title':'Код рядка', type:'number', readonly:true},
+        {name:'einvoice_id', 'title':'Код накладної', type:'number', readonly:true},
+        {name:'npp', 'title':'№ пп', type:'number', readonly:true},
+        {name:'item_id', 'title':'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
+        {name:'price', 'title':'Ціна', type:'number', required:true, min:0.01, step:0.01},
+        {name:'quantity', 'title':'Кількість', type:'number', required:true, min:0.001, step:0.001}
+      ]
+    }
+  },
+
+/* ----- рядки Складського ордеру до видаткової накладної ------------  */
+  'wh_order_row': {
+    'instance': 'wh_order_row',
+    'url': 'http://localhost:5000/wh_order_row/',
+    'title': 'Складський ордер до видаткової накладної',
+    'perpage': 10,
+    'fields': {
+      'table': [
+        {name:'einvoice_row_id', 'title':'Код рядка накладної', type:'number'},
+        {name:'id', 'title':'Код рядка ордеру', type:'number'},
+        {name:'party_id', 'title':'Код партії', type:'number'},
+        {name:'quantity', 'title':'Кількість', type:'number'}
       ]
     }
   },
 
 }
+
 
 var app = new Vue({
   el: '#App',

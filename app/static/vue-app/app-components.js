@@ -234,7 +234,7 @@ Vue.component('instance-edit', {
 
 // ==============  Коригування накладних =======================
 Vue.component('invoice-form', {
-  props:['data', 'loading', 'fields', 'actions'],
+  props:['data', 'confirmed', 'fields', 'actions'],
   data : function () {
     return {
       // For interactivity
@@ -263,6 +263,12 @@ mounted: function() {
   // For interactivity
   this.form_fields = this.fields
 },
+watch: {
+    // Спостерігаємо за змінами this.fields і оновлюємо form_fields
+    fields: function(newFields, oldFields) {
+      this.form_fields = newFields;
+    }
+  },
 methods: {
   submitForm: function(valid) {
     // Default action executed by press enter
@@ -287,13 +293,9 @@ Vue.component('invoce-edit', {
   <div v-if="data">
     <invoice-form
       :data=data
-      :fields=form_fields
       :confirmed=confirmed
-      :actions="[
-          {name:'submit', title: 'Зберегти', action: 'Save', class: '', dafault: true, disabled: confirmed},
-          {name:'cancel', title: 'Cancel', action: 'Cancel', class: ''},
-          {name:'confirm', title: confirmed ? 'Скасувати проведення' : 'Провести документ', action: 'confirm', class: ''}
-      ]"
+      :fields="isEdit ? form_fields : formReadonlyFields"
+      :actions="invoceActions"
       @action="doAction($event)"
     />
 
@@ -304,7 +306,7 @@ Vue.component('invoce-edit', {
       :fields=detail_fields
       :rows=detail_data
       :current_row="current_row"
-      :actions="isEdit ? editActions : ''"
+      :actions="isEdit ? editRowActions : ''"
 
       @select="selectRowDetail($event)"
       @edit="editRowDetail($event)"
