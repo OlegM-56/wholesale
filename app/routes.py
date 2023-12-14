@@ -1,7 +1,7 @@
 from flask import render_template, jsonify, request, send_from_directory
 from . import app, db
 from .models import *
-from .route_models import Models
+from .route_models import Models, ReportModels
 from sqlalchemy import or_, desc, func, collate
 
 
@@ -69,107 +69,111 @@ def get_data(model, pk='', options=None):
             http://localhost:5000/client/0/{"paginator":{"page":1,"limit":5},"order":["id"],"search":[{"field":"phone","value":"+22","operator":"LIKE"}]}
 
     """
-    data = None
     if model in Models:
-        # ------- Видача одного запису ---------
-        # пошук запису по primary key
-        if pk and pk != '00':
-            data = Models[model]['class'].query.get(pk)
-            # переводимо в json згідно зі схемою
-            if 'schema' in Models[model]:
-                json_data = Models[model]['schema'].jsonify(data).json
+        try:
+            # ------- Видача одного запису ---------
+            # пошук запису по primary key
+            if pk and pk != '00':
+                data = Models[model]['class'].query.get(pk)
+                # переводимо в json згідно зі схемою
+                if 'schema' in Models[model]:
+                    json_data = Models[model]['schema'].jsonify(data).json
+                else:
+                    # або без схеми
+                    json_data = jsonify(data).json
+            # -------- Видача декількох записів таблиці -------
             else:
-                # або без схеми
-                json_data = jsonify(data).json
-        # -------- Видача декількох записів таблиці -------
-        else:
-            record_count = ''
-            # виводимо записи
-            if not options:
-                # --- нема додаткових параметрів
-                data = Models[model]['class'].query.all()
-            else:
-                # ----- є додаткові параметри  ---
-                options = json.loads(options)
-                # ---====  якщо модель має спецметод для складних Моделей(декілька повязаних таблиць) для пошуку та сортування
-                dataset = get_spec_dataset(Models[model]['class'])
-                # ---===
-                data = []
-                # --- є пошук
-                filters = []
-                if 'search' in options:
-                    for param in options['search']:
+                record_count = ''
+                # виводимо записи
+                if not options:
+                    # --- нема додаткових параметрів
+                    data = Models[model]['class'].query.all()
+                else:
+                    # ----- є додаткові параметри  ---
+                    options = json.loads(options)
+                    # ---====  якщо модель має спецметод для складних Моделей(декілька повязаних таблиць) для пошуку та сортування
+                    dataset = get_spec_dataset(Models[model]['class'])
+                    # ---===
+                    data = []
+                    # --- є пошук
+                    filters = []
+                    if 'search' in options:
+                        for param in options['search']:
+                            field_name = param.get('field')
+                            fvalue = param.get('value')
+                            if field_name and fvalue:
+                                field = get_spec_field(Models[model]['class'], field_name)
+                                if field is not None:
+                                    filters.append(field.ilike(f"%{param['value']}%"))
+                    # --- відбір рядків накладної
+                    # "{detail":{"field":"pinvoice_id","value":4}}
+                    elif 'detail' in options:
+                        param = options['detail']
                         field_name = param.get('field')
                         fvalue = param.get('value')
                         if field_name and fvalue:
                             field = get_spec_field(Models[model]['class'], field_name)
                             if field is not None:
-                                filters.append(field.ilike(f"%{param['value']}%"))
-                # --- відбір рядків накладної
-                # "{details":{"field":"pinvoice_id","value":4}}
-                elif 'details' in options:
-                    param = options['details']
-                    field_name = param.get('field')
-                    fvalue = param.get('value')
-                    if field_name and fvalue:
-                        field = get_spec_field(Models[model]['class'], field_name)
-                        if field is not None:
-                            filters.append(field == fvalue)
+                                filters.append(field == fvalue)
 
-                # ---- є пагінатор
-                paginator = False
-                if 'paginator' in options:
-                    if 'limit' in options['paginator'] and 'page' in options['paginator']:
-                        limit = options['paginator']['limit']
-                        offset = limit * (options['paginator']['page'] - 1)
-                        paginator = True
-                # ----- Є сортування (по одному полю)
-                order = {}
-                if 'order' in options:
-                    param = options['order'][0]
-                    order['desc'] = 'desc' in param
-                    if order['desc']:
-                        field_name = param.split(' ')[0]
-                    else:
-                        field_name = param
-                    if field_name:
-                        field = get_spec_field(Models[model]['class'], field_name)
-                        if field is not None:
-                            order['field'] = field
+                    # ---- є пагінатор
+                    paginator = False
+                    if 'paginator' in options:
+                        if 'limit' in options['paginator'] and 'page' in options['paginator']:
+                            limit = options['paginator']['limit']
+                            offset = limit * (options['paginator']['page'] - 1)
+                            paginator = True
+                    # ----- Є сортування (по одному полю)
+                    order = {}
+                    if 'order' in options:
+                        param = options['order'][0]
+                        order['desc'] = 'desc' in param
+                        if order['desc']:
+                            field_name = param.split(' ')[0]
+                        else:
+                            field_name = param
+                        if field_name:
+                            field = get_spec_field(Models[model]['class'], field_name)
+                            if field is not None:
+                                order['field'] = field
 
-                #  ========= відбираємо дані з моделі -----
-                # ------ Є фільтр ------
-                if filters:
-                    dataset = dataset.filter(or_(*filters))
-                # ------ є сортування ----------
-                if order:
-                    if order['desc']:
-                        dataset = dataset.order_by(desc(order['field']))
-                    else:
-                        dataset = dataset.order_by(order['field'])
+                    #  ========= відбираємо дані з моделі -----
+                    # ------ Є фільтр ------
+                    if filters:
+                        dataset = dataset.filter(or_(*filters))
+                    # ------ є сортування ----------
+                    if order:
+                        if order['desc']:
+                            dataset = dataset.order_by(desc(order['field']))
+                        else:
+                            dataset = dataset.order_by(order['field'])
+                    # --- загальна кількість записів в запиті
+                    total_records = dataset.count()
+                    record_count = {'_total_records_': total_records}
+                    # ------ є Пагінатор
+                    if paginator:
+                        dataset = dataset.offset(offset).limit(limit)
+
+                    data = dataset.all()
+
+                # переводимо в json згідно зі схемою
+                if 'schemas' in Models[model]:
+                    json_data = Models[model]['schemas'].jsonify(data).json
+                else:
+                    # або без схеми
+                    json_data = jsonify(data).json
+
                 # --- загальна кількість записів в запиті
-                total_records = dataset.count()
-                record_count = {'_total_records_': total_records}
-                # ------ є Пагінатор
-                if paginator:
-                    dataset = dataset.offset(offset).limit(limit)
+                if record_count:
+                    json_data.append(record_count)
 
-                data = dataset.all()
+            return json.dumps(json_data)
 
-            # переводимо в json згідно зі схемою
-            if 'schemas' in Models[model]:
-                json_data = Models[model]['schemas'].jsonify(data).json
-            else:
-                # або без схеми
-                json_data = jsonify(data).json
-
-            # --- загальна кількість записів в запиті
-            if record_count:
-                json_data.append(record_count)
+        except Exception as e:
+            print(f"Помилка: {e}")
+            return jsonify( {'errors': [f'Помилка отримання даних моделі {model}!', str(e)] })
     else:
-        json_data = jsonify({'errors': [f"Невідома модель {model}"]})
-
-    return json.dumps(json_data)
+        return jsonify({'errors': [f"Невідома модель {model}"]})
 
 
 '''
@@ -358,6 +362,44 @@ def confirm_doc(model, pk):
 
 
 
+##############################
+# Отримання Звітів
+##############################
+@app.route('/report/<string:rep_model>/00/<options>/', methods=['GET'])
+def reports(rep_model=None, options=None):
+    """ --- Оновлення даних з будь-якої моделі (таблиці) ---
+        rep_model - модель звіту
+        options - параметри звіту    { "order":["id"], "params": {"date_rep":"2023-12-12"} }
+    """
+    if rep_model and rep_model in ReportModels:
+        try:
+            # ----- є додаткові параметри  ---
+            orders = params = None
+            if options:
+                options = json.loads(options)
+                # --- є пошук
+                if 'params' in options:
+                    params = options['params']
+                if 'order' in options:
+                    orders = options['order']
+
+            #  отримання даних звіту
+            data = ReportModels[rep_model]['class'].get_report(params, orders)
+            if not data:
+                return jsonify({'errors': [f"Звіт з моделі {rep_model} порожній!"]}), 404
+            # переводимо в json згідно зі схемою
+            if 'schemas' in ReportModels[rep_model]:
+                json_data = ReportModels[rep_model]['schemas'].jsonify(data).json
+            else:
+                # або без схеми
+                json_data = jsonify(data).json
+
+            return json.dumps(json_data)
+        except Exception as e:
+            print(f"Помилка: {e}")
+            return jsonify({'errors': [f'Помилка отримання звіту з моделі {rep_model}!', str(e)]})
+    else:
+        return jsonify({'errors': [f"Невідома модель звіту {rep_model} !"]})
 
 
 ##############################

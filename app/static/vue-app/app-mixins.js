@@ -9,6 +9,7 @@ var crud = {
       instance_search: this.instance_search,
       instance_order: this.instance_order,
       instance_paginator: this.instance_paginator,
+//      instance_detail: this.instance_detail,
       data_rows_count: this.data_rows_count
     }
   },
@@ -57,7 +58,7 @@ var crud = {
       } else {
         url += '00/'
       }
-/// new
+      // -- додаємо параметри в запит до backend
       let data = {}
       if (typeof this.instance_search != 'undefined'){
         Object.assign(data, this.instance_search)
@@ -68,6 +69,9 @@ var crud = {
       if (typeof this.instance_paginator != 'undefined'){
         Object.assign(data, this.instance_paginator)
       }
+//      if (typeof this.instance_detail != 'undefined'){
+//        Object.assign(data, this.instance_detail)
+//      }
       let params = JSON.stringify(data)
       if (params != '{}') {
         url += params
@@ -154,7 +158,7 @@ var crud_front = {
                   // update data
                   this.data = response
 
-                  ///////// new
+                  // -- загальна кількість рядків
                   // get _total_records_ and Remove record with _total_records_ from data
                   this.data_rows_count = this.data.length
                   if (typeof this.data[this.data.length-1]['_total_records_'] != 'undefined') {
@@ -283,7 +287,9 @@ var crud_detail = {
        if ( row.id > 0 ) {
           //  запит даних
           let field_main_id = appDataset[instance_detail]['main_id']  //  поле заголовка накладної
-          let url = appDataset[instance_detail]['url'] + '00/{"details":{"field":"'+ field_main_id +'","value":' + row.id.toString()+ '},"order":["npp"]}'
+          let url = appDataset[instance_detail]['url'] + '00/{"detail":{"field":"'+ field_main_id +'","value":' + row.id.toString()+ '}'
+          if (appDataset[instance_detail]['order'])  url += ',"order":'+appDataset[instance_detail]['order']
+          url += '}'
           let options = {method: 'GET'}
           this.fetch_execute(url, options,
              (result) => {
@@ -544,6 +550,7 @@ var paginator_server = {
       obj['paginator'] = this.instance_paginator['paginator']
       obj['order'] = this.instance_order['order']
       obj['search'] = this.instance_search['search']
+      obj['detail'] = this.instance_detail['detail']
       return btoa(encodeURIComponent(JSON.stringify(obj)))
             //      return JSON.stringify(obj)
             //      return btoa(JSON.stringify(obj))
@@ -605,10 +612,12 @@ var paginator_server = {
       this.instance_paginator = {'paginator':{'page':1, 'limit':this.perpage}}
       this.instance_order = {}
       this.instance_search = {}
+      this.instance_detail = {}
       if (this.prm) {
         this.instance_paginator['paginator'] = this.prm['paginator']
         this.instance_order['order'] = this.prm['order']
         this.instance_search['search'] = this.prm['search']
+        this.instance_detail['detail'] = this.prm['detail']
 
         if (this.prm['order']) {
           if (this.prm['order'].length > 0) {
@@ -846,14 +855,21 @@ var edit_invoce = {
     },
     invoceActions() {
       // Повертаємо масив дій для заголовку документу
-      arActions =[
-        {name:'submit', title:'Зберегти', action: 'Save', class: '', dafault:true, disabled: this.confirmed},
-        {name:'cancel', title:'Cancel', action: 'Cancel', class: ''},
-        {name:'confirm', title: this.confirmed ? 'Скасувати проведення' : 'Провести документ', action: 'confirm', class: ''}
-      ];
-      //  якщо є складський ордер
-      if (this.instance_wh_order) arActions.push( {name:'wh_order', title:'Складський ордер', action:'wh_order', class: '', disabled: !this.confirmed} )
-
+      //  для складського ордеру
+      if ( this.instance.includes('wh_order') ) {
+        arActions =[
+          {name:'cancel', title:'Повернутися до накладної', action: 'Cancel', class: ''}
+        ]
+      } else {
+        //  для накладних
+        arActions =[
+          {name:'submit', title:'Зберегти', action: 'Save', class: '', dafault:true, disabled: this.confirmed},
+          {name:'cancel', title:'Cancel', action: 'Cancel', class: ''},
+          {name:'confirm', title: this.confirmed ? 'Скасувати проведення' : 'Провести документ', action: 'confirm', class: ''}
+        ];
+        //  якщо є складський ордер
+        if (this.instance_wh_order) arActions.push( {name:'wh_order', title:'Складський ордер', action:'wh_order', class: '', disabled: !this.confirmed} )
+      }
       return arActions
     },
     formReadonlyFields() {
@@ -928,17 +944,23 @@ var edit_invoce = {
       }
        //  --- Повернутися до списку без збереження змін
       if ($event.action.name == 'cancel') {
-            //       this.$router.go(-1)
-        this.$router.push('/'+ this.instance)
+        this.$router.go(-1)
+//        this.$router.push('/'+ this.instance)
       }
        //  --- Проведення накладної
       if ($event.action.name == 'confirm') {
-        question = this.confirmed ? 'Скасувати проведення документу ?' : 'Провести документ ?'
+        if  ( this.confirmed  ) {
+          question = 'Скасувати проведення документу ?'
+          notify_msg = 'Проведення скасовано'
+        } else {
+          question = 'Провести документ ?'
+          notify_msg = 'Документ проведено'
+        }
         app.confirm(question).then(()=> {
             this.confirm_back(this.data,
             (response)=> {
               this.data = response
-              app.notify({type: 'success', message: 'Документ проведено'})
+              app.notify({type: 'success', message: notify_msg})
             },
             (errors)=> {
               this.show_error(errors.errors)
@@ -950,12 +972,7 @@ var edit_invoce = {
       // --- складський ордер для видаткових накладних
       if ($event.action.name == 'wh_order') {
         if (this.instance_wh_order) {
-          let obj = {}
-          obj['details'] = {"field":this.pk, "value":this.ID}
-          obj['order'] = ["einvoice_row_id", "party_id"]
-          options = btoa(encodeURIComponent(JSON.stringify(obj)))
-        //{"details":{"field":"' +this.pk+ '","value":' +this.ID+ '},"order":["einvoice_row_id","party_id"]}')
-          app.navigate('/'+ this.instance_wh_order + '/prm/'+options)
+          app.navigate('/invoice/' + this.instance_wh_order + '/' + this.ID)
         }
       }
     },

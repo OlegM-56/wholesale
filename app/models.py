@@ -401,6 +401,8 @@ class WarehouseOrderRow(db.Model):
     """ --- рядки складського ордеру для списання залишків по партіях ---"""
     __tablename__ = 'warehouse_order_row'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    einvoice_id = db.Column(db.Integer, db.ForeignKey('einvoice.num_doc', name='fk_wh_einvoice_num_doc'), nullable=False)
+    einvoice = relationship('Einvoice', backref='wh_order_row_items')
     einvoice_row_id = db.Column(db.Integer, db.ForeignKey('einvoice_row.id'), name='fk_einvoice_row_order', nullable=False)
     einvoice_row = relationship('EinvoiceRow', backref='einvoice_row_order')
     party_id = db.Column(db.Integer, db.ForeignKey('balance_item.party_id'), name='fk_balance_order_row', nullable=False)
@@ -415,8 +417,38 @@ class WarehouseOrderRowSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('id', 'einvoice_row_id', 'party_id', 'quantity')
+        fields = ('id', 'einvoice_row_id', 'npp', 'item_name', 'party_id', 'date_receipt', 'cost', 'quantity', 'unit')
 
+    npp = fields.Function(
+        # витягнути дати партії
+        serialize=lambda obj: obj.einvoice_row.npp if obj is not None and obj.einvoice_row else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    date_receipt = fields.Function(
+        # витягнути дати партії
+        serialize=lambda obj: obj.balance_item.date_receipt if obj is not None and obj.balance_item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    cost = fields.Function(
+        # витягнути дати партії
+        serialize=lambda obj: obj.balance_item.cost if obj is not None and obj.balance_item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    item_name = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.balance_item.item.item_name if obj is not None and obj.balance_item.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    unit = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.balance_item.item.unit if obj is not None and obj.balance_item.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
 
 # Schema's initializing
 warehouse_order_row_schema = WarehouseOrderRowSchema()
@@ -524,7 +556,7 @@ class BalanceItem(db.Model):
                                 BalanceItem.quantity > 0,
                                 BalanceItem.date_receipt <= date_approve
                               ).order_by(BalanceItem.date_receipt).all())
-                    #  якщо немає партії - видаємо помилку та завершуемо !
+                    #  якщо немає партії - видаємо помилку та продовжуємо !
                     if not parties:
                         error_message.append(f"Не знайдено залишків товару {row.item.item_name}  у кількості {row.quantity} "
                                              f"на дату {date_approve.strftime('%d.%m.%Y')} !")
@@ -535,7 +567,8 @@ class BalanceItem(db.Model):
                         #  доступна кількість на залишку партій
                         quantity_order = quantity_row if party.quantity >= quantity_row else party.quantity
                         # створюємо рядок ордеру
-                        new_order_row = WarehouseOrderRow(einvoice_row_id=row.id, party_id=party.party_id, quantity=quantity_order)
+                        new_order_row = WarehouseOrderRow(einvoice_id=row.einvoice_id, einvoice_row_id=row.id, party_id=party.party_id,
+                                                          quantity=quantity_order)
                         db.session.add(new_order_row)
                         #  коригуємо баланс по партії
                         party.quantity = party.quantity - quantity_order

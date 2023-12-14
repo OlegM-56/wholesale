@@ -165,9 +165,9 @@ const appDataset = {
   },
 
   /* ----- Залишки по партіях ------------  */
-  'balance-item': {
-    'instance': 'balance-item',
-    'url': 'http://localhost:5000/balance-item/',
+  'balance_item': {
+    'instance': 'balance_item',
+    'url': 'http://localhost:5000/balance_item/',
     'title': 'Залишки по партіях',
     'pk': 'party_id',
     'perpage': 10,
@@ -260,7 +260,7 @@ const appDataset = {
   'einvoice': {
     'instance': 'einvoice',
     'instance_detail': 'einvoice_row',
-    'instance_wh_order': 'wh_order_row',
+    'instance_wh_order': 'wh_order_einvoice',
     'url': 'http://localhost:5000/einvoice/',
     'title': 'Видаткові накладні',
     'pk': 'num_doc',
@@ -283,7 +283,7 @@ const appDataset = {
       ],
       'form_readonly': [
         {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
-       // {name:'customer_name', 'title': 'Постачальник', type:'string', readonly:true},
+        {name:'customer_name', 'title': 'Постачальник', type:'string', readonly:true},
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', readonly:true},
         {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
         {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
@@ -298,6 +298,7 @@ const appDataset = {
     'title': 'Рядки видаткової накладної',
     'perpage': 4,
     'main_id': 'einvoice_id',
+    'order': '["npp"]',
     'fields': {
       'table': [
         {name:'npp', 'title':'№ пп', type:'number'},
@@ -318,18 +319,74 @@ const appDataset = {
     }
   },
 
+
+/* ----- Складський ордер до Видаткової накладної ------------  */
+  'wh_order_einvoice': {
+    'instance': 'einvoice',
+    'instance_detail': 'wh_order_row',
+    'url': 'http://localhost:5000/einvoice/',
+    'title': 'Складський ордер до Видаткової накладної',
+    'pk': 'num_doc',
+    'perpage': 10,
+    'fields': {
+      'table': [
+        {name:'num_doc', 'title': 'Номер документу', type:'number', sort:true},
+        {name:'customer_name', 'title': 'Отримувач', type:'string', sort:true},
+        {name:'doc_date', 'title': 'Дата документу', type:'mydate', sort:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', sort:true},
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', sort:true},
+      ],
+      'form': [
+        {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
+        {name:'doc_date', 'title': 'Дата документу', type:'mydate', readonly:true},
+        {name:'customer_name', 'title': 'Отримувач', type:'string', readonly:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
+      ],
+      'form_readonly': [
+        {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
+        {name:'doc_date', 'title': 'Дата документу', type:'mydate', readonly:true},
+        {name:'customer_name', 'title': 'Отримувач', type:'string', readonly:true},
+        {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
+        {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', readonly:true},
+      ]
+    }
+  },
+
 /* ----- рядки Складського ордеру до видаткової накладної ------------  */
   'wh_order_row': {
     'instance': 'wh_order_row',
     'url': 'http://localhost:5000/wh_order_row/',
-    'title': 'Складський ордер до видаткової накладної',
+    'title': 'Рядки Складського ордеру до видаткової накладної',
+    'main_id': 'einvoice_id',
+    'order': '["einvoice_row_id","id"]',
     'perpage': 10,
     'fields': {
       'table': [
-        {name:'einvoice_row_id', 'title':'Код рядка накладної', type:'number'},
-        {name:'id', 'title':'Код рядка ордеру', type:'number'},
+        {name:'npp', 'title':'№ пп рядка накладної', type:'number'},
+        {name:'item_name', 'title': 'Назва товару', type:'string'},
         {name:'party_id', 'title':'Код партії', type:'number'},
-        {name:'quantity', 'title':'Кількість', type:'number'}
+        {name:'date_receipt', 'title': 'Дата приходу', type:'mydate'},
+        {name:'cost', 'title': 'Ціна закупки', type:'number'},
+        {name:'quantity', 'title':'Кількість', type:'number'},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string'}
+      ]
+    }
+  },
+
+/*  =====================   ЗВІТИ =================================== */
+/* ----- Залишки товарів на дату  ------------  */
+  'rep_balance_item': {
+    'instance': 'rep_balance_item',
+    'url': 'http://localhost:5000/report/rep_balance_item/',
+    'title': 'Залишки товарів на дату',
+    'perpage': 10,
+    'fields': {
+      'table': [
+        {name:'id', 'title':'Код товару', type:'number'},
+        {name:'item_name', 'title': 'Назва товару', type:'string'},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string'},
+        {name:'balance_item', 'title':'Залишок', type:'number'}
       ]
     }
   },
