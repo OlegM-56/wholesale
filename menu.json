@@ -4,7 +4,7 @@
         "items": [
             {
               "item": "Залишки по партіях",
-              "path": "#/balance-item"
+              "path": "#/balance_item"
             },
             {
               "item": "Прибуткові накладні",
@@ -48,7 +48,7 @@
             },
             {
                 "item": "Залишки товарів на дату",
-                "path": "#/rep_balance_item"
+                "path": "#/report/rep_balance_item"
             }
         ]
     },

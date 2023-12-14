@@ -9,8 +9,8 @@ class RepBalanceItem:
     def get_report(params, orders):
         data = []
         # параметри звіту:  order = ["id"],  params= {"date_rep":"10-12-2023"}
-        # date_rep = datetime.strptime(params.get('date_rep'), '%Y-%m-%d')
-        date_rep = date(2023, 12, 11)
+        date_rep = datetime.strptime(params.get('date_rep'), '%Y-%m-%d')
+        # date_rep = date(2023, 12, 11)
         if not date_rep: return data
         # --- Формуємо список items з кількістю приходу за період до дати звіту включно
         # рахуємо суму надходження для товарів по рядкам прибуткових накладних

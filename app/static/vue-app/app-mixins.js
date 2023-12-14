@@ -69,9 +69,9 @@ var crud = {
       if (typeof this.instance_paginator != 'undefined'){
         Object.assign(data, this.instance_paginator)
       }
-//      if (typeof this.instance_detail != 'undefined'){
-//        Object.assign(data, this.instance_detail)
-//      }
+      if (typeof this.instance_params != 'undefined'){
+        Object.assign(data, this.instance_params)
+      }
       let params = JSON.stringify(data)
       if (params != '{}') {
         url += params
@@ -1015,6 +1015,90 @@ var edit_invoce = {
       this.detail_data = null
       this.init()
     }
+  }
+}
+
+
+// ===========  REPORT ==================
+var report = {
+  data: function () {
+    return {
+      current_row: this.current_row
+    }
+  },
+  computed: {
+    instance_name() {
+      return this.getRouteParam('instance')
+    },
+  },
+  mounted: function() {
+    this.init()
+  },
+  methods: {
+    init: function () {
+      this.instance = this.instance_name
+      store.commit('title', appDataset[this.instance]['title'])
+      this.instance_url = appDataset[this.instance]['url']
+      this.fields = appDataset[this.instance]['fields']['table']
+      this.data = null
+      this.perpage = appDataset[this.instance]['perpage']
+
+    },
+    doAction: function ($event) {
+      if ($event.action.name == 'submit') {
+        if ($event.valid == true) {
+          // "params": {"date_rep":"2023-12-12"}
+          let par_rep = {}
+          Object.assign(par_rep, this.data_params)
+          this.instance_params = {"params": par_rep}
+          this.read_front()
+        }
+        else {
+          app.alert('Форма заповнена невірно! Перевірте!', '<i class="fas fa-times-circle text-danger"></i> Error')
+        }
+      }
+      if ($event.action.name == 'cancel') {
+        this.$router.go(-1)
+      }
+    },
+    selectRow: function(row) {
+        this.current_row = row
+    },
+
+    setPage: function(page) {
+      let url = '/' + this.instance + '/page/' + page
+      app.navigate(url)
+    },
+    setPrevPage: function() {
+      this.setPage(this.paginator_page -1)
+    },
+    setNextPage: function() {
+      this.setPage(this.paginator_page +1)
+    },
+    getRouteParam: function (name) {
+      return this.$route.params[name]
+    },
+
+
+
+    show_error: function(errors) {
+      let message = errors.join('<br>')
+      app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
+    },
+    getRouteParam: function (name) {
+      return this.$route.params[name]
+    },
+  },
+  watch: {
+    instance_name() {
+      this.data = null
+      this.init()
+    },
+        // Спостерігаємо за змінами this.fields і оновлюємо form_fields
+    data_params: function(newData, oldData) {
+      this.init()
+    }
+
   }
 }
 

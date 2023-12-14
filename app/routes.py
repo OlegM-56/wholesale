@@ -365,7 +365,7 @@ def confirm_doc(model, pk):
 ##############################
 # Отримання Звітів
 ##############################
-@app.route('/report/<string:rep_model>/00/<options>/', methods=['GET'])
+@app.route('/report/<string:rep_model>/00/<options>', methods=['GET'])
 def reports(rep_model=None, options=None):
     """ --- Оновлення даних з будь-якої моделі (таблиці) ---
         rep_model - модель звіту

@@ -58,7 +58,9 @@ const routes = [
     component: { template: '<implementation v-if="router.app.componentsReady(`implementation`)" />' },
     beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
   },
-  /*  Складський ордер */
+
+  /*  Звіти */
+  { path: '/report/:instance', component: { template: '<instance-report />' } },
 
   /*  Універсальні роути */
   { path: '/:instance', component: { template: '<instance-page />' } },
@@ -69,7 +71,6 @@ const routes = [
   /*  Коригування накладних */
   { path: '/invoice/:instance/:id', component: { template: '<invoce-edit />' } },
   { path: '/:instance/:id/:main_id/:max_npp', component: { template: '<instance-edit />' } }
-
 ]
 
 const router = new VueRouter({routes})
@@ -380,14 +381,17 @@ const appDataset = {
     'instance': 'rep_balance_item',
     'url': 'http://localhost:5000/report/rep_balance_item/',
     'title': 'Залишки товарів на дату',
-    'perpage': 10,
+    'perpage': 5,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number'},
         {name:'item_name', 'title': 'Назва товару', type:'string'},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
         {name:'balance_item', 'title':'Залишок', type:'number'}
-      ]
+      ],
+      'form': [
+        {name:'date_rep', 'title': 'Залишки на дату', type:'mydate'}
+      ],
     }
   },
 

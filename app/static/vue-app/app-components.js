@@ -316,7 +316,49 @@ Vue.component('invoce-edit', {
 `
 })
 
-// =======================================================================================
+// ==============  ЗВІТИ =======================
+Vue.component('instance-report', {
+  mixins: [crud, crud_front, report],
+  template: `
+<div>
+  <!--  --- Форма вводу параметрів Звіту --- -->
+  <div>
+    <standard-form
+      :data=data_params
+      :fields=form_fields
+      :actions="[
+                  {name:'submit', title:'Сформувати звіт', action: 'Save', class: '', dafault:true},
+                  {name:'cancel', title:'Закрити', action: 'Cancel', class: ''}
+                ]"
+      @action="doAction($event)"
+    />
+    <hr>
+  </div>
+
+  <!-- --- Рядки звіту --- -->
+  <div v-if="data">
+    <standard-table
+      :fields=fields
+      :rows=data
+      :current_row="current_row"
+      :actions="''"
+
+      @select="selectRow($event)"
+    />
+  </div>
+`,
+  created: function () {
+    this.data_params = []
+    this.data = null
+    this.instance = this.instance_name
+    this.form_fields = appDataset[this.instance]['fields']['form']
+  }
+
+})
+//       <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
+
+// =============================================
+
 Vue.component('paginator', {
   props: {
     pages: Number,
