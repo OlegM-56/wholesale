@@ -180,8 +180,8 @@ var crud_front = {
                 this.read_front(row)
                 app.notify({type: 'success', message: 'Успішно збережено !'})
             },
-            (response)=> {
-              this.show_error(response.errors)
+            (errors)=> {
+              this.show_error(errors.errors)
             })
           },
 
@@ -341,11 +341,13 @@ var paginator_local = {
       return Math.ceil(this.filteredRows.length/this.perpage)
     },
     paginator_page() {
-      let page = app.getRouteParam('page')
-      if (typeof page != 'undefined') {
-        return parseInt(page)
+      //  якщо сторінка задана явно
+      if (typeof this.page != 'undefined') {
+        return this.page
       }
+      //  перший запруск
       else {
+        this.page = 1
         return 1
       }
     },
@@ -489,7 +491,6 @@ var paginator_local = {
     fields: function () {
       return appDataset[this.instance]['fields']['table']
     },
-
     sortFields: function () {
       let fields = []
       for (field of this.fields) {
@@ -499,7 +500,6 @@ var paginator_local = {
       }
       return fields
     }
-
   },
 
   methods: {
@@ -769,8 +769,8 @@ var edit = {
           this.read_back(row, (response)=> {
               this.data = response
             },
-            (errors) => {
-              this.show_error(errors)
+            (response) => {
+              this.show_error(response.errors)
             }
           );
       }
@@ -784,7 +784,7 @@ var edit = {
               app.notify({type: 'success', message: 'Запис створено'})
               this.$router.go(-1)
             }, (errors)=> {
-              this.show_error(errors)
+              this.show_error(errors.errors)
             })
           }
           else {
@@ -792,7 +792,7 @@ var edit = {
               app.notify({type: 'success', message: 'Зміни збережено'})
               this.$router.go(-1)
             }, (errors)=> {
-              this.show_error(errors)
+              this.show_error(errors.errors)
             })
           }
         }
@@ -1067,8 +1067,7 @@ var report = {
     },
 
     setPage: function(page) {
-      let url = '/' + this.instance + '/page/' + page
-      app.navigate(url)
+      this.page = page
     },
     setPrevPage: function() {
       this.setPage(this.paginator_page -1)

@@ -49,6 +49,10 @@
             {
                 "item": "Залишки товарів на дату",
                 "path": "#/report/rep_balance_item"
+            },
+            {
+                "item": "Оборотна відомість товарів за преріод",
+                "path": "#/report/rep_circulation_item"
             }
         ]
     },

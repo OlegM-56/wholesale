@@ -318,7 +318,15 @@ Vue.component('invoce-edit', {
 
 // ==============  ЗВІТИ =======================
 Vue.component('instance-report', {
-  mixins: [crud, crud_front, report],
+  mixins: [crud, crud_front, paginator_local, report],
+  data : function () {
+    return {
+      // For interactivity
+      page: this.page,
+      instance: this.instance
+    }
+  },
+
   template: `
 <div>
   <!--  --- Форма вводу параметрів Звіту --- -->
@@ -332,19 +340,30 @@ Vue.component('instance-report', {
                 ]"
       @action="doAction($event)"
     />
-    <hr>
   </div>
 
   <!-- --- Рядки звіту --- -->
   <div v-if="data">
+    <table-menu @filter="search=$event"
+      @order="order($event.field, $event.type)"
+      :sorting="sortFields"
+      :orderField="orderField"
+      :orderReverse="orderReverse"
+    />
+
     <standard-table
-      :fields=fields
-      :rows=data
+      :rows="paginatedRows"
+      :fields="fields"
       :current_row="current_row"
+      :orderField="orderField"
+      :orderReverse="orderReverse"
+      :search="search"
       :actions="''"
 
       @select="selectRow($event)"
+      @order="order($event, 'string')"
     />
+    <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
   </div>
 `,
   created: function () {
@@ -352,10 +371,23 @@ Vue.component('instance-report', {
     this.data = null
     this.instance = this.instance_name
     this.form_fields = appDataset[this.instance]['fields']['form']
+  },
+  watch: {
+    // Спостерігаємо за змінами this.fields і оновлюємо form_fields
+    page: function(newFields, oldFields) {
+      rows = this.paginatedRows
+    }
+    /*,
+    instance: function(newValue, oldValue){
+        this.data_params = []
+        this.data = null
+        this.instance = this.instance_name
+        this.form_fields = appDataset[this.instance]['fields']['form']
+    } */
+
   }
 
 })
-//       <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
 
 // =============================================
 

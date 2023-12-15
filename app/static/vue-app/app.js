@@ -146,7 +146,7 @@ const appDataset = {
   'item': {
     'instance': 'item',
     'url': 'http://localhost:5000/item/',
-    'perpage': 5,
+    'perpage': 15,
     'title': 'Товари та послуги',
     'fields': {
       'table': [
@@ -171,7 +171,7 @@ const appDataset = {
     'url': 'http://localhost:5000/balance_item/',
     'title': 'Залишки по партіях',
     'pk': 'party_id',
-    'perpage': 10,
+    'perpage': 15,
     'fields': {
       'table': [
         {name:'party_id', 'title': 'Код партії', type:'number', sort:true},
@@ -194,7 +194,7 @@ const appDataset = {
     }
   },
 
-/* ----- Прибуткова накладна ------------  */
+  /* ----- Прибуткова накладна ------------  */
   'pinvoice': {
     'instance': 'pinvoice',
     'instance_detail': 'pinvoice_row',
@@ -230,7 +230,7 @@ const appDataset = {
     }
   },
 
-/* ----- рядки Прибуткова накладна ------------  */
+  /* ----- рядки Прибуткова накладна ------------  */
   'pinvoice_row': {
     'instance': 'pinvoice_row',
     'url': 'http://localhost:5000/pinvoice_row/',
@@ -257,7 +257,7 @@ const appDataset = {
     }
   },
 
-/* ----- Видаткова накладна ------------  */
+  /* ----- Видаткова накладна ------------  */
   'einvoice': {
     'instance': 'einvoice',
     'instance_detail': 'einvoice_row',
@@ -292,7 +292,7 @@ const appDataset = {
     }
   },
 
-/* ----- рядки Видаткової накладної ------------  */
+  /* ----- рядки Видаткової накладної ------------  */
   'einvoice_row': {
     'instance': 'einvoice_row',
     'url': 'http://localhost:5000/einvoice_row/',
@@ -321,7 +321,7 @@ const appDataset = {
   },
 
 
-/* ----- Складський ордер до Видаткової накладної ------------  */
+  /* ----- Складський ордер до Видаткової накладної ------------  */
   'wh_order_einvoice': {
     'instance': 'einvoice',
     'instance_detail': 'wh_order_row',
@@ -354,7 +354,7 @@ const appDataset = {
     }
   },
 
-/* ----- рядки Складського ордеру до видаткової накладної ------------  */
+  /* ----- рядки Складського ордеру до видаткової накладної ------------  */
   'wh_order_row': {
     'instance': 'wh_order_row',
     'url': 'http://localhost:5000/wh_order_row/',
@@ -375,8 +375,8 @@ const appDataset = {
     }
   },
 
-/*  =====================   ЗВІТИ =================================== */
-/* ----- Залишки товарів на дату  ------------  */
+  /*  =====================   ЗВІТИ =================================== */
+  /* ----- Залишки товарів на дату  ------------  */
   'rep_balance_item': {
     'instance': 'rep_balance_item',
     'url': 'http://localhost:5000/report/rep_balance_item/',
@@ -384,16 +384,42 @@ const appDataset = {
     'perpage': 5,
     'fields': {
       'table': [
-        {name:'id', 'title':'Код товару', type:'number'},
-        {name:'item_name', 'title': 'Назва товару', type:'string'},
+        {name:'id', 'title':'Код товару', type:'number', sort:true},
+        {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
-        {name:'balance_item', 'title':'Залишок', type:'number'}
+        {name:'balance_item', 'title':'Залишок', type:'number', sort:true}
       ],
       'form': [
         {name:'date_rep', 'title': 'Залишки на дату', type:'mydate', required:'required'}
       ],
     }
   },
+
+  /* ----- Оборотна відомість товарів за період  ------------  */
+  'rep_circulation_item': {
+    'instance': 'rep_circulation_item',
+    'url': 'http://localhost:5000/report/rep_balance_item/',
+    'title': 'Оборотна відомість товарів за період',
+    'perpage': 12,
+    'fields': {
+      'table': [
+        {name:'id', 'title':'Код товару', type:'number', sort:true},
+        {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string'},
+        {name:'start_balance_item', 'title':'Початковий залишок', type:'number'},
+        {name:'receipt_item', 'title':'Надходження', type:'number'},
+        {name:'expense_item', 'title':'Витрата', type:'number'},
+        {name:'balance_item', 'title':'Залишок', type:'number'}
+      ],
+      'form': [
+        {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
+        {name:'date_end', 'title': 'Кінцева дата періоду', type:'mydate', required:'required'}
+      ]
+    }
+  },
+
+
+
 
 }
 
