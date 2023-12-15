@@ -1051,6 +1051,7 @@ var report = {
           let par_rep = {}
           Object.assign(par_rep, this.data_params)
           this.instance_params = {"params": par_rep}
+          this.data = null
           this.read_front()
         }
         else {

@@ -386,7 +386,7 @@ def reports(rep_model=None, options=None):
             #  отримання даних звіту
             data = ReportModels[rep_model]['class'].get_report(params, orders)
             if not data:
-                return jsonify({'errors': [f"Звіт з моделі {rep_model} порожній!"]}), 404
+                return jsonify({'errors': ["За вказаними параметрами нічого не знайдено!","Звіт порожній!"]}), 404
             # переводимо в json згідно зі схемою
             if 'schemas' in ReportModels[rep_model]:
                 json_data = ReportModels[rep_model]['schemas'].jsonify(data).json

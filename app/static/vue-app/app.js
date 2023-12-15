@@ -390,7 +390,7 @@ const appDataset = {
         {name:'balance_item', 'title':'Залишок', type:'number'}
       ],
       'form': [
-        {name:'date_rep', 'title': 'Залишки на дату', type:'mydate'}
+        {name:'date_rep', 'title': 'Залишки на дату', type:'mydate', required:'required'}
       ],
     }
   },
