@@ -136,8 +136,8 @@ var crud_front = {
               this.read_front() // Reloads all data after creating one record... Not so good idea. But...
               app.notify({type: 'success', message: 'Успішно створено!'})
             },
-            (response)=> {
-              this.show_error(response.errors)
+            (errors)=> {
+              this.show_error(errors.errors)
             })
           },
 
@@ -145,7 +145,7 @@ var crud_front = {
           read_front: function (row) {
             this.read_back(row, (response)=> {
               if ('errors' in response) {
-                this.show_error(response.errors)
+                this.show_error(response.errors.errors)
               }
               else {
                 if (row) {
@@ -169,8 +169,8 @@ var crud_front = {
                 }
               }
             },
-            (response)=> {
-              this.show_error(response.errors)
+            (errors)=> {
+              this.show_error(errors.errors)
             })
           },
 
@@ -192,8 +192,8 @@ var crud_front = {
                 this.data.splice(this.data.indexOf(row), 1)
                 app.notify({type: 'success', message: 'Успішно видалено !'})
               },
-              (response)=> {
-                this.show_error(response.errors)
+              (errors)=> {
+                this.show_error(errors.errors)
               });
             }).catch( function () {
             })
@@ -256,8 +256,8 @@ var crud_ext = {
         (response)=>{
           this.$set(this.ext_data, instance, response)
         },
-        (response)=>{
-          this.show_error(response.errors)
+        (errors)=>{
+          this.show_error(errors.errors)
         }
       )
     }
@@ -300,8 +300,8 @@ var crud_detail = {
                   console.error('Invalid response:', response);
                 }
             },
-            (response) => {
-              this.show_error(response.errors)
+            (errors) => {
+              this.show_error(errors.errors)
             }
           )
        }
@@ -314,8 +314,8 @@ var crud_detail = {
             this.detail_data.splice(this.detail_data.indexOf(row), 1)
             app.notify({type: 'success', message: 'Рядок успішно видалено !'})
           },
-          (response)=> {
-            this.show_error(response.errors)
+          (errors)=> {
+            this.show_error(errors.errors)
           });
         }).catch( function () {
         })
@@ -503,7 +503,7 @@ var paginator_local = {
   },
 
   methods: {
-    order: function (field, type='string') {
+    order: function (field, type) {
       if (this.orderField === field) {
         if (this.orderReverse) {
           // disable order
@@ -515,7 +515,7 @@ var paginator_local = {
       }
       else {
         this.orderField = field
-        this.orderFieldType = type
+        this.orderFieldType = type? type : 'string'
         this.orderReverse = false
       }
     },
@@ -769,8 +769,8 @@ var edit = {
           this.read_back(row, (response)=> {
               this.data = response
             },
-            (response) => {
-              this.show_error(response.errors)
+            (errors) => {
+              this.show_error(errors.errors)
             }
           );
       }
@@ -918,11 +918,13 @@ var edit_invoce = {
         if ($event.valid == true) {
           //  ----  створення накладної ---
           if (this.ID == 0) {
-            this.create_back(this.data, (response)=> {
+            this.create_back(this.data,
+            (response)=> {
               app.notify({type: 'success', message: 'Документ створено'})
               this.$router.push('/invoice/'+ this.instance + '/' +response.num_doc);
-            }, (errors)=> {
-              this.show_error(errors)
+            },
+            (errors)=> {
+              this.show_error(errors.errors)
             })
           }
           else {
@@ -1042,7 +1044,7 @@ var report = {
       this.fields = appDataset[this.instance]['fields']['table']
       this.data = null
       this.perpage = appDataset[this.instance]['perpage']
-
+      this.form_fields = appDataset[this.instance]['fields']['form']
     },
     doAction: function ($event) {
       if ($event.action.name == 'submit') {
@@ -1059,7 +1061,8 @@ var report = {
         }
       }
       if ($event.action.name == 'cancel') {
-        this.$router.go(-1)
+        //this.$router.go(-1)
+        app.navigate('/')
       }
     },
     selectRow: function(row) {
@@ -1078,9 +1081,6 @@ var report = {
     getRouteParam: function (name) {
       return this.$route.params[name]
     },
-
-
-
     show_error: function(errors) {
       let message = errors.join('<br>')
       app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
@@ -1092,10 +1092,6 @@ var report = {
   watch: {
     instance_name() {
       this.data = null
-      this.init()
-    },
-        // Спостерігаємо за змінами this.fields і оновлюємо form_fields
-    data_params: function(newData, oldData) {
       this.init()
     }
 

@@ -26,7 +26,7 @@ Vue.component('standard-table', {
   <u-tr>
     <u-th v-for="field in fields">
         <template v-if="field.sort">
-             <header-order :field="field.name" :orderField="orderField" :orderReverse="orderReverse" @click="$emit('order', $event)">{{field.title}}</header-order>
+             <header-order :field="field.name" :field_type="field.type" :orderField="orderField" :orderReverse="orderReverse" @click="$emit('order', $event)">{{field.title}}</header-order>
         </template>
         <template v-else>
             {{field.title}}
@@ -323,15 +323,14 @@ Vue.component('instance-report', {
     return {
       // For interactivity
       page: this.page,
-      instance: this.instance
+      form_fields: this.form_fields
     }
   },
-
   template: `
 <div>
   <!--  --- Форма вводу параметрів Звіту --- -->
-  <div>
-    <standard-form
+  <div v-if="data_params">
+    <invoice-form
       :data=data_params
       :fields=form_fields
       :actions="[
@@ -344,7 +343,8 @@ Vue.component('instance-report', {
 
   <!-- --- Рядки звіту --- -->
   <div v-if="data">
-    <table-menu @filter="search=$event"
+    <table-menu
+      @filter="search=$event"
       @order="order($event.field, $event.type)"
       :sorting="sortFields"
       :orderField="orderField"
@@ -365,10 +365,11 @@ Vue.component('instance-report', {
     />
     <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
   </div>
-`,
-  created: function () {
+</div>
+`
+ ,
+  beforeMount: function () {
     this.data_params = []
-    this.data = null
     this.instance = this.instance_name
     this.form_fields = appDataset[this.instance]['fields']['form']
   },
@@ -376,16 +377,12 @@ Vue.component('instance-report', {
     // Спостерігаємо за змінами this.fields і оновлюємо form_fields
     page: function(newFields, oldFields) {
       rows = this.paginatedRows
+    },
+    form_fields: function(newFields, oldFields) {
+      this.form_fields = newFields;
+      this.data_params = []
     }
-    /*,
-    instance: function(newValue, oldValue){
-        this.data_params = []
-        this.data = null
-        this.instance = this.instance_name
-        this.form_fields = appDataset[this.instance]['fields']['form']
-    } */
-
-  }
+}
 
 })
 
@@ -477,9 +474,9 @@ Vue.component('paginator', {
 })
 
 Vue.component('header-order', {
-  props: ['field', 'orderField', 'orderReverse'],
+  props: ['field', 'field_type', 'orderField', 'orderReverse'],
   template: `
-<a @click="$emit('click', field)"><slot></slot>
+<a @click="$emit('click', field, field_type)"><slot></slot>
 <span v-if="orderField == field">
     <span v-if="orderReverse">&#11014;</span>
     <span v-else>&#11015;</span>
@@ -713,3 +710,81 @@ mounted: function () {
 }
 })
 
+
+/*-----------------------------------------------------------------------------------'''
+Є роут та компонент.
+Для різних :instance  задані різні поля для форми form_fields:
+для report1
+    form_fields = [
+        {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
+        {name:'date_end', 'title': 'Кінцева дата періоду', type:'mydate', required:'required'} ]
+для report2
+    form_fields = [
+        {name:'date_rep', 'title': 'Дата звіту', type:'mydate', required:'required'} ].
+Якщо викликати  "report/report1", а потім зразу  "report/report2", то значення form_fields  передається, але компонент instance-report  не обновляється на екрані.
+Якщо викликати  "report/report1", потім ітший роут (наприклад "/"), а потім "report/report2", то компонент instance-report обновляється на екрані.
+Як виправити?
+
+Роут
+  { path: '/report/:instance', component: { template: '<instance-report />' } },
+
+Компонент
+Vue.component('instance-report', {
+  mixins: [crud, crud_front, paginator_local, report],
+  data : function () {
+    return {
+      // For interactivity
+      page: this.page,
+      instance: this.instance,
+      form_fields: this.form_fields
+    }
+  },
+
+  template: `
+<div>
+  <!--  --- Форма вводу параметрів Звіту --- -->
+  <div>
+    <standard-form
+      :data=data_params
+      :fields=form_fields
+      :actions="[
+                  {name:'submit', title:'Сформувати звіт', action: 'Save', class: '', dafault:true},
+                  {name:'cancel', title:'Закрити', action: 'Cancel', class: ''}
+                ]"
+      @action="doAction($event)"
+    />
+  </div>
+
+  <!-- --- Рядки звіту --- -->
+    <standard-table
+      :rows="paginatedRows"
+      :fields="fields"
+
+    />
+  </div>
+`,
+  beforeMount: function () {
+    this.data_params = []
+    this.data = null
+    this.instance = this.instance_name
+    this.form_fields = appDataset[this.instance]['fields']['form']
+  },
+  beforeUnmount: function () {
+    this.data_params = []
+    this.data = null
+    this.instance = null
+    this.form_fields = null
+  },
+  watch: {
+    // Спостерігаємо за змінами this.fields і оновлюємо form_fields
+    page: function(newFields, oldFields) {
+      rows = this.paginatedRows
+    },
+    form_fields: function(newFields, oldFields) {
+      this.form_fields = newFields;
+      this.instance = this.instance_name
+    }
+}
+
+})
+*/

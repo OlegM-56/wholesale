@@ -418,6 +418,27 @@ const appDataset = {
     }
   },
 
+  /* ----- Обсяги продажу товарів за період  ------------  */
+  'rep_sale_item': {
+    'instance': 'rep_sale_item',
+    'url': 'http://localhost:5000/report/rep_sale_item/',
+    'title': 'Обсяги продажу товарів за період',
+    'perpage': 12,
+    'fields': {
+      'table': [
+        {name:'id', 'title':'Код товару', type:'number', sort:true},
+        {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string'},
+        {name:'sales_item', 'title':'Кількість', type:'number', sort:true},
+        {name:'sales_money_item', 'title':'Сума продажу, грн.', type:'number', sort:true}
+      ],
+      'form': [
+        {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
+        {name:'date_end', 'title': 'Кінцева дата періоду', type:'mydate', required:'required'}
+      ]
+    }
+  },
+
 
 
 
