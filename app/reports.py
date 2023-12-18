@@ -90,7 +90,7 @@ class RepBalanceItem:
                                  'start_balance_item': item_ends['balance_item'],
                                  'receipt_item': 0, 'expense_item': 0, 'balance_item': item_ends['balance_item']}
                                 )
-            return data
+            return sorted(data, key=lambda x: x['id'])
         # --- якщо не задано параметрів звіту
         return []
 
@@ -133,8 +133,9 @@ class RepSaleItem:
                 data.append({'id': row.item_id, 'item_name': row.item_name, 'unit': row.unit,
                              'sales_item': row.sales_item, 'sales_money_item': row.sales_money_item}
                             )
+        #  сортуємо по id
+        data = sorted(data, key=lambda x: x['id'])
 
-        # --- якщо не задано параметрів звіту
         return data
 
 

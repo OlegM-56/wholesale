@@ -26,7 +26,7 @@ Vue.component('standard-table', {
   <u-tr>
     <u-th v-for="field in fields">
         <template v-if="field.sort">
-             <header-order :field="field.name" :field_type="field.type" :orderField="orderField" :orderReverse="orderReverse" @click="$emit('order', $event)">{{field.title}}</header-order>
+             <header-order :field="field.name" :field_type="field.type" :orderField="orderField" :orderReverse="orderReverse" @click="(field)=>{$emit('order', field)}">{{field.title}}</header-order>
         </template>
         <template v-else>
             {{field.title}}
@@ -476,10 +476,10 @@ Vue.component('paginator', {
 Vue.component('header-order', {
   props: ['field', 'field_type', 'orderField', 'orderReverse'],
   template: `
-<a @click="$emit('click', field, field_type)"><slot></slot>
+<a @click="$emit('click', {field, field_type})"><slot></slot>
 <span v-if="orderField == field">
-    <span v-if="orderReverse">&#11014;</span>
-    <span v-else>&#11015;</span>
+    <span v-if="orderReverse">&#11015;</span>
+    <span v-else>&#11014;</span>
 </span>
 </a>`
 })

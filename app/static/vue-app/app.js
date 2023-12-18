@@ -93,7 +93,7 @@ const appDataset = {
     'instance': 'client',
     'url': 'http://localhost:5000/client/',
     'title': 'Контрагенти',
-    'perpage': 5,
+    'perpage': 10,
     'fields': {
       'table': [
         {name:'id', 'title': 'Код', type:'integer', sort: true},
@@ -400,7 +400,7 @@ const appDataset = {
     'instance': 'rep_circulation_item',
     'url': 'http://localhost:5000/report/rep_balance_item/',
     'title': 'Оборотна відомість товарів за період',
-    'perpage': 12,
+    'perpage': 5,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},
@@ -423,7 +423,7 @@ const appDataset = {
     'instance': 'rep_sale_item',
     'url': 'http://localhost:5000/report/rep_sale_item/',
     'title': 'Обсяги продажу товарів за період',
-    'perpage': 12,
+    'perpage': 5,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},

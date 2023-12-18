@@ -503,7 +503,16 @@ var paginator_local = {
   },
 
   methods: {
-    order: function (field, type) {
+    order: function (par_field, par_type) {
+      let field;
+      let type;
+      if (typeof par_field === 'object' && par_field !== null) {
+        field = par_field.field;
+        type = par_field.field_type;
+      } else {
+        field = par_field;
+        type = par_type;
+      }
       if (this.orderField === field) {
         if (this.orderReverse) {
           // disable order
@@ -515,7 +524,7 @@ var paginator_local = {
       }
       else {
         this.orderField = field
-        this.orderFieldType = type? type : 'string'
+        this.orderFieldType = type ? type : 'string'
         this.orderReverse = false
       }
     },
@@ -653,7 +662,13 @@ var paginator_server = {
     applayNewPrm: function () {
       app.navigate('/'+ this.instance + '/prm/' + this.prm_new)
     },
-    order: function (field) {
+    order: function (par_field) {
+      let field;
+      if (typeof par_field === 'object' && par_field !== null) {
+        field = par_field.field;
+      } else {
+        field = par_field;
+      }
       if (this.orderField === field) {
         if (this.orderReverse) {
           // disable order
