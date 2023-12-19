@@ -47,10 +47,10 @@ class RepBalanceItem:
             # залишок товару =  сума приходів - сума видатків
             balance_item = sum_receipt - sum_expense
             data.append({'id': item.id, 'item_name': item.item_name, 'unit': item.unit, 'start_balance_item': 0,
-                         'receipt_item': sum_receipt, 'expense_item': sum_expense, 'balance_item': balance_item}
+                         'receipt_item': format_number(sum_receipt), 'expense_item': format_number(sum_expense),
+                         'balance_item': format_number(balance_item)}
                         )
         return data
-
 
     """ ---  Залишки товарів на дату або Оборотна відомість за період ---  
              параметри звіту: params= {"date_rep":"10-12-2023"} або {"date_start":"10-12-2023", "date_end":"10-12-2023"}  """
@@ -87,8 +87,8 @@ class RepBalanceItem:
                 # якщо лишилися початкові залишки - додаємо їх до звіту
                 for key, item_ends in data_items_ends_dict.items():
                     data.append({'id': item_ends['id'], 'item_name': item_ends['item_name'], 'unit': item_ends['unit'],
-                                 'start_balance_item': item_ends['balance_item'],
-                                 'receipt_item': 0, 'expense_item': 0, 'balance_item': item_ends['balance_item']}
+                                 'start_balance_item': format_number(item_ends['balance_item']),
+                                 'receipt_item': 0, 'expense_item': 0, 'balance_item': format_number(item_ends['balance_item'])}
                                 )
             return sorted(data, key=lambda x: x['id'])
         # --- якщо не задано параметрів звіту
@@ -112,6 +112,7 @@ class RepSaleItem:
     @staticmethod
     def get_report(params, orders):
         data = []
+        total_sales_money = 0
         # --- 1. Обсяги продажу товарів за період - кількість та сумма грошей
         date_start = params.get('date_start')
         date_end = params.get('date_end')
@@ -130,12 +131,16 @@ class RepSaleItem:
             )
             #  --- прохрдимо по всіх отриманих рядках та формуємо звіт
             for row in sale_items_list:
+                total_sales_money += row.sales_money_item
                 data.append({'id': row.item_id, 'item_name': row.item_name, 'unit': row.unit,
-                             'sales_item': row.sales_item, 'sales_money_item': row.sales_money_item}
+                             'sales_item': format_number(row.sales_item), 'sales_money_item': format_number(row.sales_money_item, 2)}
                             )
         #  сортуємо по id
         data = sorted(data, key=lambda x: x['id'])
-
+        #  додаємо підсумковий рядок
+        if total_sales_money:
+            data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНИЙ ОБСЯГ ПРОДАЖУ</b>', 'unit': '<b>грн.</b>', 'sales_item': '',
+                         'sales_money_item': f"<b>{format_number(total_sales_money,2)}</b>"})
         return data
 
 

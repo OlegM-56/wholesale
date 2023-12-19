@@ -171,7 +171,7 @@ const appDataset = {
     'url': 'http://localhost:5000/balance_item/',
     'title': 'Залишки по партіях',
     'pk': 'party_id',
-    'perpage': 15,
+    'perpage': 1,
     'fields': {
       'table': [
         {name:'party_id', 'title': 'Код партії', type:'number', sort:true},

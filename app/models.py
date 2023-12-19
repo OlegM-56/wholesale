@@ -63,6 +63,15 @@ def get_spec_field(model, field_name):
 
     return field
 
+def format_number(num_value, digit=0):
+    if digit == 1:
+        res = f"{num_value:,.1f}".replace(',', ' ')
+    elif digit == 2:
+        res = f"{num_value:,.2f}".replace(',', ' ')
+    else:
+        res = f"{num_value:,.0f}".replace(',', ' ')
+
+    return res
 
 # ============================ Моделі в БД ====================================
 class Customer(db.Model):

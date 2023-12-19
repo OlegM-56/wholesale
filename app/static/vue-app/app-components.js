@@ -207,7 +207,14 @@ Vue.component('instance-page', {
       @delete="delete_front($event); form_data = null"
     />
 
-    <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
+    <paginator
+      :pages="paginator_pages"
+      gap="7"
+      :currentPage="paginator_page"
+      :row_count="data_rows_count"
+      @setPage="setPage($event)" @setPrevPage="setPrevPage()" @setNextPage="setNextPage()"
+      class="text-center"
+    />
 
   </div>
 </div>`,
@@ -363,15 +370,25 @@ Vue.component('instance-report', {
       @select="selectRow($event)"
       @order="order($event, 'string')"
     />
-    <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
+    <paginator
+      :pages="paginator_pages"
+      gap="5"
+      :row_count="data_rows_count"
+      :currentPage="paginator_page"
+      @setPage="setPage($event)"   @setPrevPage="setPrevPage()" @setNextPage="setNextPage()"
+      class="text-center">
+    </paginator>
   </div>
 </div>
 `
+//     <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
+
  ,
   beforeMount: function () {
     this.data_params = []
     this.instance = this.instance_name
     this.form_fields = appDataset[this.instance]['fields']['form']
+//    this.data_rows_count = 0
   },
   watch: {
     // Спостерігаємо за змінами this.fields і оновлюємо form_fields
@@ -393,7 +410,8 @@ Vue.component('paginator', {
     pages: Number,
     currentPage: Number,
     gap: Number,
-    loading: Boolean
+    loading: Boolean,
+    row_count: Number
   },
   template: `
 <nav v-show="pages > 1">
@@ -411,6 +429,7 @@ Vue.component('paginator', {
     <li class="page-item" v-bind:class="{disabled: currentPage == pages}"><a @click="$emit('setNextPage')" class="page-link">›</a></li>
     <li class="page-item" v-bind:class="{disabled: currentPage == pages}"><a @click="$emit('setPage', pages)" class="page-link">»</a></li>
   </ul>
+  <span>Всього рядків: <b>{{ row_count }}</b></span>
 </nav>`,
   computed: {
     ver () {
