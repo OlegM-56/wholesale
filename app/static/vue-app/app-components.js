@@ -429,7 +429,7 @@ Vue.component('paginator', {
     <li class="page-item" v-bind:class="{disabled: currentPage == pages}"><a @click="$emit('setNextPage')" class="page-link">›</a></li>
     <li class="page-item" v-bind:class="{disabled: currentPage == pages}"><a @click="$emit('setPage', pages)" class="page-link">»</a></li>
   </ul>
-  <span>Всього рядків: <b>{{ row_count }}</b></span>
+  <span>Всього:  сторінок <b>{{ pages }}</b>,  рядків <b>{{ row_count }}</b></span>
 </nav>`,
   computed: {
     ver () {

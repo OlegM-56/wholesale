@@ -1,5 +1,3 @@
-from sqlalchemy import func
-
 from .models import *
 
 
@@ -54,6 +52,7 @@ class RepBalanceItem:
 
     """ ---  Залишки товарів на дату або Оборотна відомість за період ---  
              параметри звіту: params= {"date_rep":"10-12-2023"} або {"date_start":"10-12-2023", "date_end":"10-12-2023"}  """
+
     @staticmethod
     def get_report(params, orders):
         """ Отримання звітів: """
@@ -109,6 +108,7 @@ rep_balance_items_schema = RepBalanceItemSchema(many=True)
 
 class RepSaleItem:
     """ =====================  Обсяги продажу товарів за період ========================  """
+
     @staticmethod
     def get_report(params, orders):
         data = []
@@ -140,7 +140,7 @@ class RepSaleItem:
         #  додаємо підсумковий рядок
         if total_sales_money:
             data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНИЙ ОБСЯГ ПРОДАЖУ</b>', 'unit': '<b>грн.</b>', 'sales_item': '',
-                         'sales_money_item': f"<b>{format_number(total_sales_money,2)}</b>"})
+                         'sales_money_item': f"<b>{format_number(total_sales_money, 2)}</b>"})
         return data
 
 
@@ -156,6 +156,72 @@ rep_sale_item_schema = RepSaleItemSchema()
 rep_sale_items_schema = RepSaleItemSchema(many=True)
 
 
+class ProfitSaleItem:
+    """ =====================  Прибутки за період ========================  """
+
+    @staticmethod
+    def get_report(params, orders):
+        data = []
+        # --- 1. Прибутки за період: по кожному товару  прибуток = сумма реалізації - сумма закупки по складських ордерах
+        date_start = params.get('date_start')
+        date_end = params.get('date_end')
+        if date_start and date_end:
+            # --- Формуємо список проданих товарів за період з date_0(включно) до дати звіту(включно)
+            #     по рядках проведених видаткових накладних
+            sale_items_list = (
+                db.session.query(
+                    EinvoiceRow.item_id, Item.item_name, Item.unit,
+                    func.sum(EinvoiceRow.quantity).label('sales_item'),
+                    func.sum(EinvoiceRow.quantity * EinvoiceRow.price).label('sales_money_item')
+                ).join(Einvoice).join(Item).filter(
+                    Einvoice.doc_date_approve >= date_start, Einvoice.doc_date_approve <= date_end, Einvoice.doc_status == 1
+                ).group_by(EinvoiceRow.item_id, Item.item_name, Item.unit).all()
+            )
+            # --- Формуємо список товарів за період з date_0(включно) до дати звіту(включно)
+            #     по рядках по складських ордерів по проведених видаткових накладних
+            #     рахуємо вартість закіпки по кожному товару
+            purchase_items_list = (
+                db.session.query(
+                    BalanceItem.item_id,
+                    func.sum(WarehouseOrderRow.quantity * BalanceItem.cost).label('purchase_money_item')
+                ).join(Einvoice).join(BalanceItem).filter(
+                    Einvoice.doc_date_approve >= date_start, Einvoice.doc_date_approve <= date_end, Einvoice.doc_status == 1
+                ).group_by(BalanceItem.item_id).all()
+            )
+            #  масив -- в словник для швидкого пошуку
+            purchase_items_dict = dict(purchase_items_list)
+            # ----------- формуємо звіт ----------
+            total_profit = 0
+            for item in sale_items_list:
+                purchase_money_item = purchase_items_dict.get(item.item_id, 0)
+                profit_item = item.sales_money_item - purchase_money_item
+                total_profit += profit_item
+                data.append({'id': item.item_id, 'item_name': item.item_name, 'unit': item.unit,
+                             'sales_item': format_number(item.sales_item),
+                             'sales_money_item': format_number(item.sales_money_item, 2),
+                             'purchase_money_item': format_number(purchase_money_item, 2),
+                             'profit_item': format_number(profit_item, 2)}
+                            )
+            #  сортуємо по id
+            data = sorted(data, key=lambda x: x['id'])
+            #  додаємо підсумковий рядок
+            data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНИЙ ПРИБУТОК ВІД ПРОДАЖУ</b>', 'unit': '<b>грн.</b>', 'sales_item': '',
+                         'sales_money_item': '', 'purchase_money_item': '',
+                         'profit_item': f"<b>{format_number(total_profit, 2)}</b>"})
+
+        return data
+
+
+class ProfitSaleItemSchema(ma.Schema):
+    """ schema """
+
+    class Meta:
+        fields = ('id', 'item_name', 'unit', 'sales_item', 'sales_money_item', 'purchase_money_item', 'profit_item')
+
+
+# Schema's initializing
+profit_sale_item_schema = ProfitSaleItemSchema()
+profit_sale_items_schema = ProfitSaleItemSchema(many=True)
 
 '''
   --- Приклад sum group by

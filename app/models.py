@@ -1,6 +1,7 @@
 from flask_marshmallow.fields import fields
 from datetime import datetime, date, timedelta
 
+from sqlalchemy import func
 from sqlalchemy.orm import relationship
 
 from . import db, ma
@@ -13,6 +14,7 @@ import codecs
 # ============================ Моделі в файлах ====================================
 class Menu:
     """ ---  Головне меню ---"""
+
     class query:
         @staticmethod
         def all():
@@ -26,6 +28,7 @@ class Menu:
 
 class StatusDoc:
     """ ---  Статус накладної ---"""
+
     class query:
         @staticmethod
         def all():
@@ -63,6 +66,7 @@ def get_spec_field(model, field_name):
 
     return field
 
+
 def format_number(num_value, digit=0):
     if digit == 1:
         res = f"{num_value:,.1f}".replace(',', ' ')
@@ -72,6 +76,7 @@ def format_number(num_value, digit=0):
         res = f"{num_value:,.0f}".replace(',', ' ')
 
     return res
+
 
 # ============================ Моделі в БД ====================================
 class Customer(db.Model):
@@ -207,13 +212,22 @@ class Pinvoice(db.Model):
         #  запускаємо метод проведення документу та повертаємо результат проведення
         return BalanceItem.update_balance(adding=True, doc=data, rows=rows)
 
+    @staticmethod
+    def get_sum_doc(num_doc):
+        """  ---- Сума по накладній ----
+        row - документ
+        """
+        sumdoc = PinvoiceRow.query.filter_by(pinvoice_id=num_doc).with_entities(func.sum(PinvoiceRow.quantity * PinvoiceRow.price)).scalar()
+        return sumdoc if sumdoc else 0
+
 
 class PinvoiceSchema(ma.Schema):
     """ schema """
 
     class Meta:
         fields = (
-            'num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_status_name', 'doc_date_approve', 'custom_numdoc')
+            'num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_status_name', 'doc_date_approve', 'custom_numdoc',
+            'sum_doc')
 
     doc_date = fields.Function(
         # дата в строку
@@ -239,6 +253,11 @@ class PinvoiceSchema(ma.Schema):
         serialize=lambda obj: obj.custom_numdoc if obj and obj.custom_numdoc else '',
         deserialize=lambda value: value
     )
+    sum_doc = fields.Function(
+        serialize=lambda obj: format_number(obj.get_sum_doc(obj.num_doc), 2) if obj is not None else 0,
+        deserialize=lambda value: None
+    )
+
 
 # Schema's initializing
 pinvoice_schema = PinvoiceSchema()
@@ -266,7 +285,7 @@ class PinvoiceRowSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('id', 'pinvoice_id', 'npp', 'item_id', 'item_name', 'unit', 'quantity', 'price')
+        fields = ('id', 'pinvoice_id', 'npp', 'item_id', 'item_name', 'unit', 'quantity', 'price', 'amount')
 
     item_name = fields.Function(
         # витягнути ім'я товару
@@ -278,6 +297,12 @@ class PinvoiceRowSchema(ma.Schema):
         # витягнути ім'я товару
         serialize=lambda obj: obj.item.unit if obj is not None and obj.item else '',
         # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    amount = fields.Function(
+        # рахуемо суму грошей по рядку
+        serialize=lambda obj: format_number(obj.quantity * obj.price if obj is not None else 0, 2),
+        # пропустити суму грошей по рядку
         deserialize=lambda value: None
     )
 
@@ -318,7 +343,7 @@ class Einvoice(db.Model):
     @staticmethod
     def delete_row(row):
         """ метод для коректного видалення рядків накладної на самої накладної"""
-        # row - документ Pinvoice для видалення
+        # row - документ Einvoice для видалення
         if row is not None:
             # Видаляємо всі рядки документу Pinvoice
             EinvoiceRow.query.filter_by(einvoice_id=row.num_doc).delete()
@@ -333,12 +358,21 @@ class Einvoice(db.Model):
         #  запускаємо метод проведення документу та повертаємо результат проведення
         return BalanceItem.update_balance(adding=False, doc=data, rows=rows)
 
+    @staticmethod
+    def get_sum_doc(num_doc):
+        """  ---- Сума по накладній ----
+        row - документ
+        """
+        sumdoc = EinvoiceRow.query.filter_by(einvoice_id=num_doc).with_entities(func.sum(EinvoiceRow.quantity * EinvoiceRow.price)).scalar()
+        return sumdoc if sumdoc else 0
+
+
 class EinvoiceSchema(ma.Schema):
     """ schema """
 
     class Meta:
         fields = (
-            'num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_status_name', 'doc_date_approve')
+            'num_doc', 'customer_id', 'customer_name', 'doc_date', 'doc_status', 'doc_status_name', 'doc_date_approve', 'sum_doc')
 
     doc_date = fields.Function(
         # дата в строку
@@ -360,6 +394,11 @@ class EinvoiceSchema(ma.Schema):
         serialize=lambda obj: StatusDoc.query.get(obj.doc_status),
         deserialize=lambda value: None
     )
+    sum_doc = fields.Function(
+        serialize=lambda obj: format_number(obj.get_sum_doc(obj.num_doc) if obj is not None else 0, 2),
+        deserialize=lambda value: None
+    )
+
 
 # Schema's initializing
 einvoice_schema = EinvoiceSchema()
@@ -382,11 +421,12 @@ class EinvoiceRow(db.Model):
     def __repr__(self):
         return f"Einvoice_row Doc N {self.einvoice}, npp {self.npp}"
 
+
 class EinvoiceRowSchema(ma.Schema):
     """ schema """
 
     class Meta:
-        fields = ('id', 'einvoice_id', 'npp', 'item_id', 'item_name', 'unit', 'quantity', 'price')
+        fields = ('id', 'einvoice_id', 'npp', 'item_id', 'item_name', 'unit', 'quantity', 'price', 'amount')
 
     item_name = fields.Function(
         # витягнути ім'я товару
@@ -395,11 +435,18 @@ class EinvoiceRowSchema(ma.Schema):
         deserialize=lambda value: None
     )
     unit = fields.Function(
-        # витягнути ім'я товару
+        # витягнути назву ОВ
         serialize=lambda obj: obj.item.unit if obj is not None and obj.item else '',
-        # пропустити ім'я товару при десеріалізації
+        # пропустити назву ОВ
         deserialize=lambda value: None
     )
+    amount = fields.Function(
+        # рахуемо суму грошей по рядку
+        serialize=lambda obj: format_number(obj.quantity * obj.price if obj is not None else 0, 2),
+        # пропустити суму грошей по рядку
+        deserialize=lambda value: None
+    )
+
 
 # Schema's initializing
 einvoice_row_schema = EinvoiceRowSchema()
@@ -458,6 +505,7 @@ class WarehouseOrderRowSchema(ma.Schema):
         # пропустити ім'я товару при десеріалізації
         deserialize=lambda value: None
     )
+
 
 # Schema's initializing
 warehouse_order_row_schema = WarehouseOrderRowSchema()
@@ -561,10 +609,10 @@ class BalanceItem(db.Model):
                 if confirm:
                     # шукаємо партії з залишком > 0 для товару з рядка
                     parties = (BalanceItem.query.filter(
-                                BalanceItem.item_id == row.item_id,
-                                BalanceItem.quantity > 0,
-                                BalanceItem.date_receipt <= date_approve
-                              ).order_by(BalanceItem.date_receipt).all())
+                        BalanceItem.item_id == row.item_id,
+                        BalanceItem.quantity > 0,
+                        BalanceItem.date_receipt <= date_approve
+                    ).order_by(BalanceItem.date_receipt).all())
                     #  якщо немає партії - видаємо помилку та продовжуємо !
                     if not parties:
                         error_message.append(f"Не знайдено залишків товару {row.item.item_name}  у кількості {row.quantity} "
@@ -637,12 +685,10 @@ class BalanceItemSchema(ma.Schema):
         deserialize=lambda value: None
     )
 
+
 # Schema's initializing
 balance_item_schema = BalanceItemSchema()
 balance_items_schema = BalanceItemSchema(many=True)
-
-
-
 
 """
     release_date = db.Column(db.Date, index=True, nullable=False)

@@ -937,7 +937,6 @@ var edit_invoce = {
             this.create_back(this.data,
             (response)=> {
               app.notify({type: 'success', message: 'Документ створено'})
-              this.$router.push('/invoice/'+ this.instance + '/' +response.num_doc);
             },
             (errors)=> {
               this.show_error(errors.errors)
@@ -953,8 +952,8 @@ var edit_invoce = {
             (errors)=> {
               this.show_error(errors.errors)
             })
-            this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
           }
+          this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
         }
         else {
           app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')

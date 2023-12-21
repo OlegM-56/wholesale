@@ -19,3 +19,5 @@ Models['balance_item'] = {'class': BalanceItem, 'schema': balance_item_schema, '
 ReportModels = {}
 ReportModels['rep_balance_item'] = {'class': RepBalanceItem, 'schema': rep_balance_item_schema, 'schemas': rep_balance_items_schema}
 ReportModels['rep_sale_item'] = {'class': RepSaleItem, 'schema': rep_sale_item_schema, 'schemas': rep_sale_items_schema}
+ReportModels['profit_sale_item'] = {'class': ProfitSaleItem, 'schema': profit_sale_item_schema, 'schemas': profit_sale_items_schema}
+
