@@ -133,11 +133,32 @@ const appDataset = {
     'fields': {
       'table': [
         {name:'unit_code', 'title': 'Код', type:'string', sort: true},
-        {name:'unit_name', 'title': 'Назва одиниці вимірк', type:'string', sort: true},
+        {name:'unit_name', 'title': 'Назва одиниці виміру', type:'string', sort: true},
       ],
       'form': [
         {name:'unit_code', 'title': 'Код', type:'string', maxlength: 10, readonly:true},
-        {name:'unit_name', 'title': 'Назва одиниці вимірк', type:'string', maxlength: 15, readonly:true},
+        {name:'unit_name', 'title': 'Назва одиниці виміру', type:'string', maxlength: 15, readonly:true},
+      ]
+    }
+  },
+
+/* --- Групи товарів/послуг --- */
+  'group_item': {
+    'instance': 'group_item',
+    'url': 'http://localhost:5000/group_item/',
+    'perpage': 10,
+    'order': '["group_name"]',
+    'title': 'Групи товарів (послуг)',
+    'fields': {
+      'table': [
+        {name:'id', 'title': 'Код групи', type:'number', sort: true},
+        {name:'group_name', 'title': 'Назва групи', type:'string', sort: true},
+        {name:'group_description', 'title': 'Опис групи', type:'string'},
+      ],
+      'form': [
+        {name:'id', 'title': 'Код групи', type:'number'},
+        {name:'group_name', 'title': 'Назва групи', type:'string', maxlength: 50, required:'required'},
+        {name:'group_description', 'title': 'Опис групи', type:'string', maxlength: 150},
       ]
     }
   },
@@ -147,6 +168,7 @@ const appDataset = {
     'instance': 'item',
     'url': 'http://localhost:5000/item/',
     'perpage': 15,
+    'order': '["item_name"]',
     'title': 'Товари та послуги',
     'fields': {
       'table': [
@@ -154,16 +176,46 @@ const appDataset = {
         {name:'item_name', 'title': 'Назва', type:'string', sort: true},
         {name:'unit', 'title': 'Одиниця виміру', type:'select', sort: true},
         {name:'service', 'title': 'Послуга', type:'string', sort: true},
+        {name:'group_name', 'title': 'Група товару (послуги)', type:'number', sort: true}
       ],
       'form': [
         {name:'id', 'title': 'Код', type:'number', readonly:true},
         {name:'item_name', 'title': 'Назва товару (послуги)', type:'string', maxlength: 50, required:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'select', dataset: {src: 'unit', value: 'unit_code', caption: 'unit_name'}, required:true},
         {name:'service', 'title': '', type:'radio', items:[{value:'', caption:'Товар'},{value:'Так', caption:'Послуга'}]},
+        {name:'group_id', 'title': 'Група товару (послуги)', type:'select', dataset: {src: 'group_item', value: 'id', caption: 'group_name'}, required:true},
         {name:'item_description', 'title': 'Опис товару (послуги)', type:'string', maxlength: 150, required:false}
       ]
     }
   },
+
+  /* ----- Актуальний Прайс ------------  */
+  'price_list': {
+    'instance': 'price_list',
+    'url': 'http://localhost:5000/price_list/',
+    'title': 'Актуальний Прайс-лист товарів та послуг',
+    'perpage': 10,
+    'fields': {
+      'table': [
+        {name:'id', 'title': 'Код рядка', type:'number', sort:true},
+        {name:'item_id', 'title': 'Код товару', type:'string', sort:true},
+        {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string'},
+        {name:'price', 'title': 'Оптова ціна', type:'number', sort:true},
+        {name:'service', 'title': 'Послуга', type:'string', sort: true},
+        {name:'is_actual', 'title': 'Актуально', type:'string', sort: true},
+      ],
+      'form': [
+        {name:'id', 'title': 'Код рядка', type:'number', readonly:true},
+        {name:'item_id', 'title':'Товар', type:'select', dataset:{src: 'item', value:'id', caption:'item_name'}, required:true},
+        {name:'unit', 'title': 'Одиниця виміру', type:'string', readonly:true},
+        {name:'price', 'title':'Ціна', type:'number', min:0.01, step:0.01, required:true},
+        {name:'service', 'title': 'Послуга', type:'string', readonly:true},
+        {name:'is_actual', 'title': '', type:'radio', items:[{value:'', caption:'Disabled !'},{value:'Так', caption:'Актуально'}]},
+      ]
+    }
+  },
+
 
   /* ----- Залишки по партіях ------------  */
   'balance_item': {
@@ -240,6 +292,7 @@ const appDataset = {
     'title': 'Рядки прибуткової накладної',
     'perpage': 4,
     'main_id': 'pinvoice_id',
+    'order': '["npp"]',
     'fields': {
       'table': [
         {name:'npp', 'title':'№ пп', type:'number'},

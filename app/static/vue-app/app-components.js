@@ -78,8 +78,13 @@ Vue.component('form-field', {
   <div v-if="field.type=='label'" :id="'field_'+field.name">{{value}}</div>
   <div v-if="field.type=='html'" v-html="value"></div>
 
+  <!--  Мої типи полів -->
   <input v-if="field.type=='mydate'" type="date" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()"
   :required="field.required" autocomplete="off" :readonly="field.readonly">
+
+  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value); $emit('change_val', {value: $event.target.value, fieldName: field.name})"
+  class="form-control" :readonly="field.readonly" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
+  <!-- ----------- -->
 
   <input v-if="field.type=='string'" type="text" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()"
   :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern" :readonly="field.readonly">
@@ -92,7 +97,7 @@ Vue.component('form-field', {
   <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control"
   v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
 
-  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :readonly="field.readonly" :required="field.required"><option v-for="item in field.items"
+  <select v-if="field.type=='old_select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :readonly="field.readonly" :required="field.required"><option v-for="item in field.items"
   :value="item.value">{{item.caption}}</option></select>
 
   <div v-if="field.type=='checkbox'" class="form-check">

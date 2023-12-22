@@ -251,6 +251,7 @@ var crud_ext = {
     },
     read_ext_data: function(instance) {
       let url = appDataset[instance]['url']
+      if (appDataset[instance]['order'])  url +=  '00/{"order":'+appDataset[instance]['order']+'}'
       let options = {method: 'GET'}
       this.fetch_execute(url, options,
         (response)=>{
@@ -813,7 +814,7 @@ var edit = {
           }
         }
         else {
-          app.alert('Фарма заповнена невірно! Перевірте!', '<i class="fas fa-times-circle text-danger"></i> Error')
+          app.alert('Форма заповнена невірно! Перевірте!', '<i class="fas fa-times-circle text-danger"></i> Error')
         }
       }
       if ($event.action.name == 'cancel') {

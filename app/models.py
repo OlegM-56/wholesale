@@ -79,6 +79,8 @@ def format_number(num_value, digit=0):
 
 
 # ============================ Моделі в БД ====================================
+
+# ===================  ДОВІДНИКИ ==================
 class Customer(db.Model):
     """ --- Клієнти ---"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -130,33 +132,82 @@ unit_schema = UnitSchema()
 units_schema = UnitSchema(many=True)
 
 
+class GroupItem(db.Model):
+    """ --- Групи товарів/послуг --- """
+    __tablename__ = 'group_item'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    group_name = db.Column(db.String(50), nullable=False)
+    group_description = db.Column(db.String(150), nullable=True)
+
+    def __repr__(self):
+        return f"{self.id} - {self.group_name}"
+
+
+class GroupItemSchema(ma.Schema):
+    """ schema """
+
+    class Meta:
+        fields = ('id', 'group_name', 'group_description')
+
+    group_description = fields.Function(
+        # вывод данных
+        serialize=lambda obj: obj.group_description if obj and obj.group_description else '',
+        # ввод данных
+        deserialize=lambda value: value if value else None
+    )
+
+
+# Schema's initializing
+group_item_schema = GroupItemSchema()
+group_items_schema = GroupItemSchema(many=True)
+
+
 class Item(db.Model):
     """ ---  Товари та послуги ---"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     item_name = db.Column(db.String(50), nullable=False)
     unit = db.Column(db.String(10), db.ForeignKey('unit.unit_code'), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('group_item.id', name='fk_item_group'), nullable=False, default=1)
+    group = relationship('GroupItem', backref='item_group')
     service = db.Column(db.Boolean, nullable=False, default=False)
-    item_description = db.Column(db.String(150), nullable=True)
+    item_description = db.Column(db.String(150), nullable=True, default='')
 
     def __repr__(self):
         return f"Item {self.id}, {self.item_name}"
+
+    @staticmethod
+    def get_dataset():
+        """ DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        return Item.query.join(GroupItem, Item.group_id == GroupItem.id)
+
+    @staticmethod
+    def get_field(field_name):
+        """ Отримання поля з DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        if field_name == 'group_name':
+            field = GroupItem.group_name
+        else:
+            field = getattr(Item, field_name, None)
+        return field
 
 
 class ItemSchema(ma.Schema):
     """ Item_schema """
 
     class Meta:
-        fields = ('id', 'item_name', 'unit', 'service', 'item_description')
+        fields = ('id', 'item_name', 'unit', 'service', 'group_id', 'group_name', 'item_description')
 
     service = fields.Function(
         serialize=lambda obj: 'Так' if obj is not None and obj.service else '',
         deserialize=lambda value: value == 'Так')
-
     item_description = fields.Function(
         # вывод данных
-        serialize=lambda obj: obj.item_description if obj is not None else '',
+        serialize=lambda obj: obj.item_description if obj and obj.item_description else '',
         # ввод данных
-        deserialize=lambda value: value if value else ''
+        deserialize=lambda value: value if value else None
+    )
+    group_name = fields.Function(
+        serialize=lambda obj: obj.group.group_name if obj is not None and obj.group else '',
+        deserialize=lambda value: None
     )
 
 
@@ -165,6 +216,67 @@ item_schema = ItemSchema()
 items_schema = ItemSchema(many=True)
 
 
+class PriceList(db.Model):
+    """ --- Актуальний Прайс-лист ---"""
+    __tablename__ = 'price_list'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_price_list_item'), nullable=False)
+    # Визначаємо відношення до моделі Item
+    item = relationship('Item', backref='price_list_items')
+    is_actual = db.Column(db.Boolean, nullable=False, default=True)
+    price = db.Column(db.Float, nullable=False, default=0)
+
+    def __repr__(self):
+        return f"PriceList {self.item_id} = {self.price}"
+
+    @staticmethod
+    def get_dataset():
+        """ DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        return PriceList.query.join(Item, PriceList.item_id == Item.id)
+
+    @staticmethod
+    def get_field(field_name):
+        """ Отримання поля з DATASET для складних Моделей(декілька повязаних таблиць) для пошуку та сортування"""
+        if field_name == 'item_name':
+            field = Item.item_name
+        else:
+            field = getattr(PriceList, field_name, None)
+        return field
+
+
+class PriceListSchema(ma.Schema):
+    """ Item_schema """
+
+    class Meta:
+        fields = ('id', 'item_id', 'item_name', 'unit', 'service', 'price', 'is_actual')
+
+    item_name = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.item_name if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    unit = fields.Function(
+        # витягнути ім'я товару
+        serialize=lambda obj: obj.item.unit if obj is not None and obj.item else '',
+        # пропустити ім'я товару при десеріалізації
+        deserialize=lambda value: None
+    )
+    service = fields.Function(
+        serialize=lambda obj: 'Так' if obj and obj.item and obj.item.service else '',
+        deserialize=lambda value: None)
+
+    is_actual = fields.Function(
+        serialize=lambda obj: 'Так' if obj and obj.is_actual else '! disabled',
+        deserialize=lambda value: value == 'Так')
+
+
+# Schema's initializing
+price_list = PriceListSchema()
+price_lists = PriceListSchema(many=True)
+
+
+# ===================  ДОКУМЕНТИ ==================
 class Pinvoice(db.Model):
     """ --- Прибуткова накладна ---"""
     num_doc = db.Column(db.Integer, primary_key=True, autoincrement=True)
