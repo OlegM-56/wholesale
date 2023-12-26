@@ -1,5 +1,8 @@
 "use strict";
 
+const main_url = 'http://localhost:5000/'
+
+
 const loadComponents = function(name) {
   let version = ''
   if (typeof app != 'undefined') {
@@ -80,18 +83,18 @@ const appDataset = {
   /* ---  Головне меню --- */
   'menu':{
     'instance': 'menu',
-    'url': 'http://localhost:5000/menu/',
+    'url': main_url + 'menu/',
   },
   /* ---  Статус накладної --- */
   'status_doc':{
     'instance': 'status_doc',
-    'url': 'http://localhost:5000/status_doc/',
+    'url': main_url + 'status_doc/',
   },
 
   /* ---  Контрагенти --- */
   'client': {
     'instance': 'client',
-    'url': 'http://localhost:5000/client/',
+    'url': main_url + 'client/',
     'title': 'Контрагенти',
     'perpage': 10,
     'fields': {
@@ -126,7 +129,7 @@ const appDataset = {
   /* --- Одиниці виміру --- */
   'unit': {
     'instance': 'unit',
-    'url': 'http://localhost:5000/unit/',
+    'url': main_url + 'unit/',
     'perpage': 5,
     'title': 'Одиниці виміру',
     'pk': 'unit_code',
@@ -145,7 +148,7 @@ const appDataset = {
 /* --- Групи товарів/послуг --- */
   'group_item': {
     'instance': 'group_item',
-    'url': 'http://localhost:5000/group_item/',
+    'url': main_url + 'group_item/',
     'perpage': 10,
     'order': '["group_name"]',
     'title': 'Групи товарів (послуг)',
@@ -166,7 +169,7 @@ const appDataset = {
   /* ---  Товари та послуги --- */
   'item': {
     'instance': 'item',
-    'url': 'http://localhost:5000/item/',
+    'url': main_url + 'item/',
     'perpage': 15,
     'order': '["item_name"]',
     'title': 'Товари та послуги',
@@ -192,7 +195,7 @@ const appDataset = {
   /* ----- Актуальний Прайс ------------  */
   'price_list': {
     'instance': 'price_list',
-    'url': 'http://localhost:5000/price_list/',
+    'url': main_url + 'price_list/',
     'title': 'Актуальний Прайс-лист товарів та послуг',
     'perpage': 10,
     'fields': {
@@ -211,7 +214,7 @@ const appDataset = {
         {name:'unit', 'title': 'Одиниця виміру', type:'string', readonly:true},
         {name:'price', 'title':'Ціна', type:'number', min:0.01, step:0.01, required:true},
         {name:'service', 'title': 'Послуга', type:'string', readonly:true},
-        {name:'is_actual', 'title': '', type:'radio', items:[{value:'', caption:'Disabled !'},{value:'Так', caption:'Актуально'}]},
+        {name:'is_actual', 'title': '', type:'radio', items:[{value:'', caption:'Disabled'},{value:'Так', caption:'Актуально'}]},
       ]
     }
   },
@@ -220,7 +223,7 @@ const appDataset = {
   /* ----- Залишки по партіях ------------  */
   'balance_item': {
     'instance': 'balance_item',
-    'url': 'http://localhost:5000/balance_item/',
+    'url': main_url + 'balance_item/',
     'title': 'Залишки по партіях',
     'pk': 'party_id',
     'perpage': 10,
@@ -250,7 +253,7 @@ const appDataset = {
   'pinvoice': {
     'instance': 'pinvoice',
     'instance_detail': 'pinvoice_row',
-    'url': 'http://localhost:5000/pinvoice/',
+    'url': main_url + 'pinvoice/',
     'title': 'Прибуткові накладні',
     'pk': 'num_doc',
     'perpage': 10,
@@ -288,7 +291,7 @@ const appDataset = {
   /* ----- рядки Прибуткова накладна ------------  */
   'pinvoice_row': {
     'instance': 'pinvoice_row',
-    'url': 'http://localhost:5000/pinvoice_row/',
+    'url': main_url + 'pinvoice_row/',
     'title': 'Рядки прибуткової накладної',
     'perpage': 4,
     'main_id': 'pinvoice_id',
@@ -320,7 +323,7 @@ const appDataset = {
     'instance': 'einvoice',
     'instance_detail': 'einvoice_row',
     'instance_wh_order': 'wh_order_einvoice',
-    'url': 'http://localhost:5000/einvoice/',
+    'url': main_url + 'einvoice/',
     'title': 'Видаткові накладні',
     'pk': 'num_doc',
     'perpage': 10,
@@ -358,7 +361,7 @@ const appDataset = {
   /* ----- рядки Видаткової накладної ------------  */
   'einvoice_row': {
     'instance': 'einvoice_row',
-    'url': 'http://localhost:5000/einvoice_row/',
+    'url': main_url + 'einvoice_row/',
     'title': 'Рядки видаткової накладної',
     'perpage': 4,
     'main_id': 'einvoice_id',
@@ -377,7 +380,7 @@ const appDataset = {
         {name:'id', 'title':'Код рядка', type:'number', readonly:true},
         {name:'einvoice_id', 'title':'Код накладної', type:'number', readonly:true},
         {name:'npp', 'title':'№ пп', type:'number', readonly:true},
-        {name:'item_id', 'title':'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true},
+        {name:'item_id', 'title':'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true, get_price:true},
         {name:'quantity', 'title':'Кількість', type:'number', required:true, min:0.001, step:0.001},
         {name:'price', 'title':'Ціна', type:'number', required:true, min:0.01, step:0.01},
         {name:'amount', 'title':'Сума', type:'string', readonly:true}
@@ -390,7 +393,7 @@ const appDataset = {
   'wh_order_einvoice': {
     'instance': 'einvoice',
     'instance_detail': 'wh_order_row',
-    'url': 'http://localhost:5000/einvoice/',
+    'url': main_url + 'einvoice/',
     'title': 'Складський ордер до Видаткової накладної',
     'pk': 'num_doc',
     'perpage': 10,
@@ -422,7 +425,7 @@ const appDataset = {
   /* ----- рядки Складського ордеру до видаткової накладної ------------  */
   'wh_order_row': {
     'instance': 'wh_order_row',
-    'url': 'http://localhost:5000/wh_order_row/',
+    'url': main_url + 'wh_order_row/',
     'title': 'Рядки Складського ордеру до видаткової накладної',
     'main_id': 'einvoice_id',
     'order': '["einvoice_row_id","id"]',
@@ -444,7 +447,7 @@ const appDataset = {
   /* ----- Залишки товарів на дату  ------------  */
   'rep_balance_item': {
     'instance': 'rep_balance_item',
-    'url': 'http://localhost:5000/report/rep_balance_item/',
+    'url': main_url + 'report/rep_balance_item/',
     'title': 'Залишки товарів на дату',
     'perpage': 5,
     'fields': {
@@ -463,7 +466,7 @@ const appDataset = {
   /* ----- Оборотна відомість товарів за період  ------------  */
   'rep_circulation_item': {
     'instance': 'rep_circulation_item',
-    'url': 'http://localhost:5000/report/rep_balance_item/',
+    'url': main_url + 'report/rep_balance_item/',
     'title': 'Оборотна відомість товарів за період',
     'perpage': 5,
     'fields': {
@@ -486,7 +489,7 @@ const appDataset = {
   /* ----- Обсяги продажу товарів за період  ------------  */
   'rep_sale_item': {
     'instance': 'rep_sale_item',
-    'url': 'http://localhost:5000/report/rep_sale_item/',
+    'url': main_url + 'report/rep_sale_item/',
     'title': 'Обсяги продажу товарів за період',
     'perpage': 5,
     'fields': {
@@ -507,7 +510,7 @@ const appDataset = {
   /* ----- Обсяги продажу товарів за період  ------------  */
   'profit_sale_item': {
     'instance': 'profit_sale_item',
-    'url': 'http://localhost:5000/report/profit_sale_item/',
+    'url': main_url + 'report/profit_sale_item/',
     'title': 'Прибуток від продажу за період',
     'perpage': 5,
     'fields': {

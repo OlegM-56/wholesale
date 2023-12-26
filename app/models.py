@@ -257,9 +257,9 @@ class PriceListSchema(ma.Schema):
         deserialize=lambda value: None
     )
     unit = fields.Function(
-        # витягнути ім'я товару
+        # витягнути ОВ
         serialize=lambda obj: obj.item.unit if obj is not None and obj.item else '',
-        # пропустити ім'я товару при десеріалізації
+        # пропустити ОВ при десеріалізації
         deserialize=lambda value: None
     )
     service = fields.Function(
@@ -267,13 +267,23 @@ class PriceListSchema(ma.Schema):
         deserialize=lambda value: None)
 
     is_actual = fields.Function(
-        serialize=lambda obj: 'Так' if obj and obj.is_actual else '! disabled',
+        serialize=lambda obj: 'Так' if obj and obj.is_actual else '',
         deserialize=lambda value: value == 'Так')
+
+
+class PriceShortSchema(ma.Schema):
+    """ Item_schema """
+
+    class Meta:
+        fields = ('item_id', 'price')
 
 
 # Schema's initializing
 price_list = PriceListSchema()
 price_lists = PriceListSchema(many=True)
+
+price_short = PriceShortSchema()
+price_shorts = PriceShortSchema(many=True)
 
 
 # ===================  ДОКУМЕНТИ ==================

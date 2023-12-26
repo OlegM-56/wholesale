@@ -82,7 +82,7 @@ Vue.component('form-field', {
   <input v-if="field.type=='mydate'" type="date" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()"
   :required="field.required" autocomplete="off" :readonly="field.readonly">
 
-  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value); $emit('change_val', {value: $event.target.value, fieldName: field.name})"
+  <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value); $emit('change_value', {value: $event.target.value, fieldName: field.name})"
   class="form-control" :readonly="field.readonly" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
   <!-- ----------- -->
 
@@ -145,16 +145,16 @@ Vue.component('standard-form', {
     }
   },
   template: `
-<form name="dataForm" autocomplete="off">
-  <div class="form-group" v-for="field in form_fields">
-    <label v-if="field.title && (['checkbox','switch','autocomplete','file'].indexOf(field.type)==-1)">{{field.title}}<sup v-if="field.required==true">*</sup></label>
-    <form-field :field=field v-model="data[field.name]" :value=data[field.name] @keyEnter="submitForm(dataForm.checkValidity())" />
-    <small v-if="field.help" class="form-text text-muted">{{field.help}}</small>
-  </div>
-  <div class="form-group">
-    <input v-for="action in actions" type="button" :value="action.title" class="btn btn-primary m-1" @click="doAction(dataForm.checkValidity(), action)" :disabled="loading">
-  </div>
-</form>
+    <form name="dataForm" autocomplete="off">
+      <div class="form-group" v-for="field in form_fields">
+        <label v-if="field.title && (['checkbox','switch','autocomplete','file'].indexOf(field.type)==-1)">{{field.title}}<sup v-if="field.required==true">*</sup></label>
+        <form-field :field=field v-model="data[field.name]" :value=data[field.name] @keyEnter="submitForm(dataForm.checkValidity())" @change_value="change_value" />
+        <small v-if="field.help" class="form-text text-muted">{{field.help}}</small>
+      </div>
+      <div class="form-group">
+        <input v-for="action in actions" type="button" :value="action.title" class="btn btn-primary m-1" @click="doAction(dataForm.checkValidity(), action)" :disabled="loading">
+      </div>
+    </form>
 `,
 mounted: function() {
   // For interactivity
@@ -172,7 +172,13 @@ methods: {
   },
   doAction: function(valid, action) {
       this.$emit('action', {'action': action, 'row': this.data, 'valid': valid})
+  },
+  //  передача події в батьківський компонент
+  change_value: function ({value, fieldName}){
+      this.$emit('change_value', {'value': value, 'fieldName': fieldName})
   }
+
+
 }
 })
 
@@ -239,6 +245,8 @@ Vue.component('instance-edit', {
           {name:'cancel', title: 'Cancel', action: 'Cancel', class: ''}
       ]"
       @action="doAction($event)"
+      @change_value="change_value"
+      @input="change_value"
     />
   </div>
 </div>`

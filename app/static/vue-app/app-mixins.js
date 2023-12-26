@@ -244,11 +244,18 @@ var crud_ext = {
       for (field of fields) {
         if (field.dataset) {
           if (field.dataset.src) {
+             //  завантаження даних для вибору
             this.read_ext_data(field.dataset.src)
+             // завантаження прайсу
+            if (field. get_price) {
+              this.read_price()
+            }
           }
         }
       }
     },
+
+    //  отримання довідників для полів з вибором
     read_ext_data: function(instance) {
       let url = appDataset[instance]['url']
       if (appDataset[instance]['order'])  url +=  '00/{"order":'+appDataset[instance]['order']+'}'
@@ -256,6 +263,20 @@ var crud_ext = {
       this.fetch_execute(url, options,
         (response)=>{
           this.$set(this.ext_data, instance, response)
+        },
+        (errors)=>{
+          this.show_error(errors.errors)
+        }
+      )
+    },
+    //  завантаження прайсу в форматі 'item_id' : 'price'
+    read_price: function() {
+      let instance_price = 'price_short'
+      let url = main_url + instance_price + '/00/{"search":[{"field":"", "value":"True"}]}'
+      let options = {method: 'GET'}
+      this.fetch_execute(url, options,
+        (response)=>{
+          this.$set(this.ext_data, instance_price, response)
         },
         (errors)=>{
           this.show_error(errors.errors)
@@ -824,6 +845,17 @@ var edit = {
     show_error: function(errors) {
       let message = errors.join('<br>')
       app.alert(message, '<i class="fas fa-times-circle text-danger"></i> Error')
+    },
+    //  --- Зміна Item у видатковій накладній ---
+    change_value: function ({value, fieldName}) {
+      //  знаходимо обєкт поля
+      let field = this.form_fields.find(obj => obj.name == fieldName)
+      if ( field.get_price ) {
+          // запрос ціни з прайса
+          let new_price = this.ext_data.price_short.find(obj => obj.item_id == value)
+          // міняємо ціну в формі
+          if (new_price && new_price.price)  this.data.price = new_price.price;
+      }
     },
 
     getRouteParam: function (name) {

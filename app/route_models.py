@@ -18,6 +18,7 @@ Models['wh_order_row'] = {'class': WarehouseOrderRow, 'schema': warehouse_order_
 
 Models['balance_item'] = {'class': BalanceItem, 'schema': balance_item_schema, 'schemas': balance_items_schema}
 Models['price_list'] = {'class': PriceList, 'schema': price_list, 'schemas': price_lists}
+Models['price_short'] = {'class': PriceList, 'schema': price_short, 'schemas': price_shorts}
 
 """ ---------- Reports list для автоматичного routing ---------- """
 ReportModels = {}
