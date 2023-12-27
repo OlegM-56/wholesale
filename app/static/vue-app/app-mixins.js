@@ -1092,6 +1092,7 @@ var report = {
       this.fields = appDataset[this.instance]['fields']['table']
       this.data = null
       this.perpage = appDataset[this.instance]['perpage']
+      this.page = 1
       this.form_fields = appDataset[this.instance]['fields']['form']
     },
     doAction: function ($event) {

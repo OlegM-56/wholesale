@@ -2,7 +2,117 @@ from .models import *
 
 
 class RepBalanceItem:
-    """ =====================  Залишки та обороти товарів на дату та за період ========================  """
+    """ =====================  Залишки товарів на дату ========================  """
+    @staticmethod
+    def get_report(params, orders):
+        """ ---  Залишки товарів на дату ---   параметри звіту: params= {"date_rep":"10-12-2023"}
+          - Рахуємо суми всіх приходів по товару за період  кількість * ціна приходу
+            Рахуємо суми всіх витрат товарів за період по складських ордерах  кількість * ціна приходу з партії
+            Отримуємо Вартість залишків по цінам приходу
+          - Рахуємо суми залишків по прайсовим цінам   кількіст залишку * прайсова ціна
+            якщо в прайсі немає ціни - ???????
+        """
+        data = []
+        date_rep = params.get('date_rep')
+        if not date_rep: return data
+
+        # --- Формуємо список items, послуги пропускаємо
+        item_list = Item.query.filter_by(service=False).all()
+        # --- Формуємо список приходів за період з date_0(включно) до дати звіту(включно)
+        # рахуємо суму надходження для товарів по рядкам проведених! прибуткових накладних
+        # використовуємо функцію sum, щоб підрахувати суму по полям
+        receipt_item_list = (
+            db.session.query(
+                PinvoiceRow.item_id,
+                func.sum(PinvoiceRow.quantity).label('sum_quantity'),
+                func.sum(PinvoiceRow.quantity*PinvoiceRow.price).label('sum_money')
+            ).join(Pinvoice).filter(
+                Pinvoice.doc_date_approve <= date_rep, Pinvoice.doc_status == 1
+            ).group_by(PinvoiceRow.item_id).all()
+        )
+        #  масив -- в словник для швидкого пошуку
+        receipt_items_dict = {row[0]: row[1:] for row in receipt_item_list if row[1] > 0}
+
+        # --- Формуємо список видатків товарів за період з date_0(включно) до дати звіту(включно)
+        #     по рядках складських ордерів
+        expense_item_list = (
+            db.session.query(
+                BalanceItem.item_id,
+                func.sum(WarehouseOrderRow.quantity).label('sum_quantity'),
+                func.sum(WarehouseOrderRow.quantity * BalanceItem.cost).label('sum_money')
+            ).join(Einvoice).join(BalanceItem).filter(
+                Einvoice.doc_date_approve <= date_rep, Einvoice.doc_status == 1
+            ).group_by(BalanceItem.item_id).all()
+        )
+        #  масив -- в словник для швидкого пошуку
+        expense_items_dict = {row[0]: row[1:] for row in expense_item_list if row[1] > 0}
+        #   актуальний прайс
+        price_list = (
+            db.session.query(PriceList.item_id, PriceList.price)
+            .filter_by(is_actual=True)
+            .all()
+        )
+        #  масив -- в словник для швидкого пошуку
+        price_dict = dict(price_list)
+
+        #  --- прохрдимо по всіх товарах та формуємо звіт
+        total_sum_item = total_pricesum_item = 0
+        for item in item_list:
+            # приход
+            receipt = receipt_items_dict.get(item.id, None)
+            if receipt is None:
+                sum_receipt = 0
+                sum_receipt_money = 0
+            else:
+                sum_receipt, sum_receipt_money = receipt
+            # видаток
+            expense = expense_items_dict.get(item.id, None)
+            if expense is None:
+                sum_expense = 0
+                sum_expense_money = 0
+            else:
+                sum_expense, sum_expense_money = expense
+
+            #  якщо руху немає - пропускаємо
+            if sum_receipt == 0 and sum_expense == 0: continue
+            # залишок товару =  сума приходів - сума видатків
+            balance_item = sum_receipt - sum_expense
+            #  сума по прайсовій ціні
+            price = price_dict.get(item.id, 0)
+            balance_pricesum_item = price*balance_item
+            total_pricesum_item += balance_pricesum_item
+            #  сума по ціні приходу
+            balance_sum_item = sum_receipt_money - sum_expense_money
+            total_sum_item += balance_sum_item
+
+            data.append({'id': item.id, 'item_name': item.item_name, 'unit': item.unit,
+                         'balance_item': format_number(balance_item),
+                         'balance_sum_item': format_number(balance_sum_item),
+                         'balance_pricesum_item': format_number(balance_pricesum_item)
+                         }
+                        )
+        #  додаємо підсумковий рядок
+        if total_sum_item or total_pricesum_item:
+            data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНА  ВАРТІСТЬ  ЗАЛИШКІВ</b>', 'unit': '<b>грн.</b>', 'balance_item': '',
+                         'balance_sum_item': f"<b>{format_number(total_sum_item, 2)}</b>",
+                         'balance_pricesum_item': f"<b>{format_number(total_pricesum_item, 2)}</b>"})
+        return data
+
+
+class RepBalanceItemSchema(ma.Schema):
+    """ schema """
+
+    class Meta:
+        fields = ('id', 'item_name', 'unit', 'balance_item', 'balance_sum_item', 'balance_pricesum_item')
+
+
+# Schema's initializing
+rep_balance_item_schema = RepBalanceItemSchema()
+rep_balance_items_schema = RepBalanceItemSchema(many=True)
+
+
+class RepCirculationItem:
+    """ =====================  Обороти товарів на дату та за період ========================  """
 
     @staticmethod
     def get_list_data(date_rep, date_rep0=date(2000, 1, 1)):
@@ -56,12 +166,7 @@ class RepBalanceItem:
     @staticmethod
     def get_report(params, orders):
         """ Отримання звітів: """
-        # ---  1. Залишки товарів на дату ----
-        date_rep = params.get('date_rep')
-        if date_rep:
-            return RepBalanceItem.get_list_data(datetime.strptime(date_rep, '%Y-%m-%d').date())
-
-        #  --- 2. Оборотна відомість за період ---
+        #  --- Оборотна відомість за період ---
         date_start = params.get('date_start')
         date_end = params.get('date_end')
         if date_start and date_end:
@@ -70,8 +175,9 @@ class RepBalanceItem:
             if date_start > date_end:
                 raise ValueError(f"Початкова дата періоду більше за кінцеву: {date_start} > {date_end} ! ")
             # -- початкові залишки
-            data_items_ends = RepBalanceItem.get_list_data(date_start - timedelta(days=1))
-            data = RepBalanceItem.get_list_data(date_end, date_start)
+            data_items_ends = RepCirculationItem.get_list_data(date_start - timedelta(days=1))
+            # -- Обороти
+            data = RepCirculationItem.get_list_data(date_end, date_start)
             # --- додаємо початкові залишки
             if data_items_ends:
                 #  масив -- в словник для швидкого пошуку
@@ -94,7 +200,7 @@ class RepBalanceItem:
         return []
 
 
-class RepBalanceItemSchema(ma.Schema):
+class RepCirculationItemSchema(ma.Schema):
     """ schema """
 
     class Meta:
@@ -102,8 +208,8 @@ class RepBalanceItemSchema(ma.Schema):
 
 
 # Schema's initializing
-rep_balance_item_schema = RepBalanceItemSchema()
-rep_balance_items_schema = RepBalanceItemSchema(many=True)
+rep_circulation_item_schema = RepCirculationItemSchema()
+rep_circulation_items_schema = RepCirculationItemSchema(many=True)
 
 
 class RepSaleItem:

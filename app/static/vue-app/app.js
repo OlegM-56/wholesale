@@ -220,11 +220,11 @@ const appDataset = {
   },
 
 
-  /* ----- Залишки по партіях ------------  */
+  /* ----- Поточні залишки по партіях ------------  */
   'balance_item': {
     'instance': 'balance_item',
     'url': main_url + 'balance_item/',
-    'title': 'Залишки по партіях',
+    'title': 'Поточні залишки по партіях',
     'pk': 'party_id',
     'perpage': 10,
     'fields': {
@@ -449,13 +449,15 @@ const appDataset = {
     'instance': 'rep_balance_item',
     'url': main_url + 'report/rep_balance_item/',
     'title': 'Залишки товарів на дату',
-    'perpage': 5,
+    'perpage': 10,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
-        {name:'balance_item', 'title':'Залишок', type:'number', sort:true}
+        {name:'balance_item', 'title':'Залишок', type:'number', sort:true},
+        {name:'balance_sum_item', 'title':'Залишок по цінам приходу, грн.', type:'string', sort:true},
+        {name:'balance_pricesum_item', 'title':'Залишок по прайсовим цінам, грн.', type:'string', sort:true},
       ],
       'form': [
         {name:'date_rep', 'title': 'Залишки на дату', type:'mydate', required:'required'}
@@ -466,7 +468,7 @@ const appDataset = {
   /* ----- Оборотна відомість товарів за період  ------------  */
   'rep_circulation_item': {
     'instance': 'rep_circulation_item',
-    'url': main_url + 'report/rep_balance_item/',
+    'url': main_url + 'report/rep_circulation_item/',
     'title': 'Оборотна відомість товарів за період',
     'perpage': 5,
     'fields': {
@@ -507,12 +509,12 @@ const appDataset = {
     }
   },
 
-  /* ----- Обсяги продажу товарів за період  ------------  */
+  /* ----- Прибуток від продажу за період  ------------  */
   'profit_sale_item': {
     'instance': 'profit_sale_item',
     'url': main_url + 'report/profit_sale_item/',
     'title': 'Прибуток від продажу за період',
-    'perpage': 5,
+    'perpage': 15,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},
