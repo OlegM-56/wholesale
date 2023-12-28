@@ -493,11 +493,10 @@ var paginator_local = {
     },
 
     paginatedRows () {
-      if (typeof this.filteredRows == 'undefined') {
+      if ( ! this.filteredRows ) {
         return []
       }
       else {
-//        this.data_rows_count = this.filteredRows.length  // загальна кількість рядків
         let paginatedRows = this.filteredRows
         if (this.perpage) {
           let rowStart = (this.paginator_page - 1) * this.perpage
@@ -1102,17 +1101,17 @@ var report = {
           let par_rep = {}
           Object.assign(par_rep, this.data_params)
           this.instance_params = {"params": par_rep}
+          //  заміна заголовка стовпчика, якщо заданий тип звіту
+          if ( this.data_params['type_rep'] !== null ) {
+            //  для АВС-звіту
+            if ( this.data_params['type_rep'] == 'profit' ) {
+              this.fields[2]['title'] = 'Прибуток від продажу, грн.'
+            } else {
+              this.fields[2]['title'] = 'Виручка від продажу, грн.'
+            }
+          }
           this.data = null
           this.read_front()
-
-//          // -- підсумкові суми по звіту
-//          // get _total_records_ and Remove record with _total_records_ from data
-//          this.data_rows_count = this.data.length
-//          if (typeof this.data[this.data.length-1]['_total_records_'] != 'undefined') {
-//            this.data_rows_count = this.data[this.data.length-1]['_total_records_']
-//            this.data = this.data.slice(0, this.data.length-1)
-//          }
-
         }
         else {
           app.alert('Форма заповнена невірно! Перевірте!', '<i class="fas fa-times-circle text-danger"></i> Error')

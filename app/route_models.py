@@ -28,3 +28,6 @@ ReportModels['rep_circulation_item'] = {'class': RepCirculationItem, 'schema': r
 ReportModels['rep_sale_item'] = {'class': RepSaleItem, 'schema': rep_sale_item_schema, 'schemas': rep_sale_items_schema}
 ReportModels['profit_sale_item'] = {'class': ProfitSaleItem, 'schema': profit_sale_item_schema, 'schemas': profit_sale_items_schema}
 
+ReportModels['abc_analysis'] = {'class': ABCanalysis, 'schema': abc_analysis_schema, 'schemas': abc_analysis_schemas}
+
+

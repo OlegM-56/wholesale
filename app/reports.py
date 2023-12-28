@@ -94,8 +94,8 @@ class RepBalanceItem:
         #  додаємо підсумковий рядок
         if total_sum_item or total_pricesum_item:
             data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНА  ВАРТІСТЬ  ЗАЛИШКІВ</b>', 'unit': '<b>грн.</b>', 'balance_item': '',
-                         'balance_sum_item': f"<b>{format_number(total_sum_item, 2)}</b>",
-                         'balance_pricesum_item': f"<b>{format_number(total_pricesum_item, 2)}</b>"})
+                         'balance_sum_item': f"<b>{format_number(total_sum_item)}</b>",
+                         'balance_pricesum_item': f"<b>{format_number(total_pricesum_item)}</b>"})
         return data
 
 
@@ -328,6 +328,78 @@ class ProfitSaleItemSchema(ma.Schema):
 # Schema's initializing
 profit_sale_item_schema = ProfitSaleItemSchema()
 profit_sale_items_schema = ProfitSaleItemSchema(many=True)
+
+class ABCanalysis:
+    """ ABC-аналіз по Виручці та Прибутку
+        Виручка/Прибуток  Питома вага  Накопичена частка  Група
+     """
+    @staticmethod
+    def get_report(params, orders):
+        data = []
+        # --- отримуємо звіт по прибуткам
+        data_tmp = ProfitSaleItem.get_report(params, orders)
+        data_tmp.pop()   # видаляємо останній рядок з підсумками
+        # отримуємо параметр типу звіту
+        type_rep = params.get('type_rep', '')
+        # --- якщо дані отримані - проводимо ABC-аналіз
+        #  type_rep == 'profit'  - по прибутку, '' - по виручці
+        if data_tmp:
+            # data = {'id', 'item_name', 'unit', 'sales_item', 'sales_money_item', 'purchase_money_item', 'profit_item'}
+            #   1. формування масиву даних
+            total_amount_indicator = 0
+            for row in data_tmp:
+                indicator = row['profit_item'] if type_rep == 'profit' else row['sales_money_item']
+                amount_indicator = float(indicator.replace(' ',''))
+                total_amount_indicator += amount_indicator
+                data.append({'id': row['id'], 'item_name': row['item_name'], 'amount_indicator': amount_indicator})
+            #   2. Сортуємо по показнику по спаданню
+            data = sorted(data, key=lambda x: x['amount_indicator'], reverse=True)
+            #   3. рахуємо відсотки та визначаємо групи
+            groupA = 80
+            groupB = 95
+            cumulative_percentage = 0
+            a = b = False
+            for row in data:
+                percentage = row['amount_indicator'] / total_amount_indicator * 100
+                cumulative_percentage += percentage
+                cumulative_percentage = cumulative_percentage
+                #  групи ABC
+                if cumulative_percentage <= groupB:
+                    if cumulative_percentage <= groupA:
+                        group = 'A'
+                    else:
+                        if not a:
+                            group = 'A'
+                            a = True
+                        else:
+                            group = 'B'
+                            b = True
+                else:
+                    if not a:
+                        group = 'A'
+                        a = True
+                    elif not b:
+                        group = 'B'
+                        b = True
+                    else:
+                        group = 'C'
+                # додаємо параметри
+                row.update({'percentage': round(percentage, 2), 'cumulative_percentage': round(cumulative_percentage, 2),  'group': group})
+
+        # -----
+        return data
+
+
+class ABCanalysisSchema(ma.Schema):
+    """ schema """
+
+    class Meta:
+        fields = ('id', 'item_name', 'amount_indicator',  'percentage', 'cumulative_percentage',  'group')
+
+# Schema's initializing
+abc_analysis_schema = ABCanalysisSchema()
+abc_analysis_schemas = ABCanalysisSchema(many=True)
+
 
 '''
   --- Приклад sum group by

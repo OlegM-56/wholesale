@@ -69,7 +69,7 @@
             },
             {
                 "item": "ABC-анализ продажу за період",
-                "path": "#/"
+                "path": "#/report/abc_analysis"
             }
         ]
     },

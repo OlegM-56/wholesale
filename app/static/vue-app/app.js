@@ -521,7 +521,7 @@ const appDataset = {
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
         {name:'sales_item', 'title':'Кількість', type:'number', sort:true},
-        {name:'sales_money_item', 'title':'Сума продажу, грн.', type:'number', sort:true},
+        {name:'sales_money_item', 'title':'Виручка від продажу, грн.', type:'number', sort:true},
         {name:'purchase_money_item', 'title':'Витрати на закупку, грн.', type:'number', sort:true},
         {name:'profit_item', 'title':'Сума прибуткуу, грн.', type:'number', sort:true}
       ],
@@ -532,6 +532,28 @@ const appDataset = {
     }
   },
 
+  /* ----- ABC-аналіз за період  ------------  */
+  'abc_analysis': {
+    'instance': 'profit_sale_item',
+    'url': main_url + 'report/abc_analysis/',
+    'title': 'ABC-аналіз продажу за період (виручка та прибуток)',
+    'perpage': 15,
+    'fields': {
+      'table': [
+        {name:'id', 'title':'Код товару', type:'number'},
+        {name:'item_name', 'title': 'Назва товару', type:'string'},
+        {name:'amount_indicator', 'title':'Виручка від продажу, грн.', type:'string', 'title2': 'Прибуток від продажу, грн.'},
+        {name:'percentage', 'title':'Питома вага, %', type:'number'},
+        {name:'cumulative_percentage', 'title':'Накопичена частка, %', type:'number'},
+        {name:'group', 'title':'Група', type:'string'}
+      ],
+      'form': [
+        {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
+        {name:'date_end', 'title': 'Кінцева дата періоду', type:'mydate', required:'required'},
+        {name:'type_rep', 'title': 'Аналізуємо', type:'radio', items:[{value:'', caption:'Виручка'},{value:'profit', caption:'Прибуток'}]}
+      ]
+    }
+  },
 
 }
 
