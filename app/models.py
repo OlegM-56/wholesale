@@ -1,3 +1,5 @@
+import re
+
 from flask_marshmallow.fields import fields
 from datetime import datetime, date, timedelta
 
@@ -68,12 +70,24 @@ def get_spec_field(model, field_name):
 
 
 def format_number(num_value, digit=0):
+    """ форматування чисел для виводу   000 000 000.00 """
+    if num_value is None:
+        return ''
+    # якщо num_value рядок - видаляємо всі тегі та переводимо в число
+    str_patram = str_value = ''
+    if isinstance(num_value, str):
+        str_patram = num_value
+        str_value = re.sub('<.*?>', '', num_value)
+        num_value = float(str_value)
     if digit == 1:
         res = f"{num_value:,.1f}".replace(',', ' ')
     elif digit == 2:
         res = f"{num_value:,.2f}".replace(',', ' ')
     else:
         res = f"{num_value:,.0f}".replace(',', ' ')
+    # якщо параметр був рядком - вставляємо отрирмане значення в цей рядок, зберігаючи теги, якщо вони є
+    if str_patram and str_value:
+        res = str_patram.replace(str_value, res)
 
     return res
 

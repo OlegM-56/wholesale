@@ -52,10 +52,6 @@
                 "path": "#/report/rep_sale_item"
             },
             {
-                "item": "Продаж товарів за період по групам",
-                "path": "#/"
-            },
-            {
                 "item": "Прибутки за період",
                 "path": "#/report/profit_sale_item"
             },
@@ -70,7 +66,12 @@
             {
                 "item": "ABC-анализ продажу за період",
                 "path": "#/report/abc_analysis"
+            },
+            {
+                "item": "Обсяги продажу за період по групам",
+                "path": "#/report/rep_sale_sroup"
             }
+
         ]
     },
 

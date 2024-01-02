@@ -157,6 +157,11 @@ var crud_front = {
                 else {
                   // update data
                   this.data = response
+                  // -- зображення діаграми
+                  if (typeof this.data[this.data.length-1]['_image_diagram_'] != 'undefined') {
+                    this.image_diagram = this.data[this.data.length-1]['_image_diagram_']
+                    this.data = this.data.slice(0, this.data.length-1)
+                  }
 
                   // -- загальна кількість рядків
                   // get _total_records_ and Remove record with _total_records_ from data

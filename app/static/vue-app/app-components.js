@@ -343,8 +343,18 @@ Vue.component('instance-report', {
     return {
       // For interactivity
       page: this.page,
-      form_fields: this.form_fields
+      form_fields: this.form_fields,
+      image_diagram: this.getImageUrl
     }
+  },
+  computed: {
+    getImageUrl() {
+      if (this.image_diagram) {
+        return `data:image/jpeg;base64,${this.image_diagram}`
+      } else {
+        return ''
+      }
+    },
   },
   template: `
 <div>
@@ -391,27 +401,29 @@ Vue.component('instance-report', {
       @setPage="setPage($event)"   @setPrevPage="setPrevPage()" @setNextPage="setNextPage()"
       class="text-center">
     </paginator>
+
+    <img :src="getImageUrl">
   </div>
 </div>
 `
-//     <paginator v-bind:pages="paginator_pages" gap="5" v-bind:currentPage="paginator_page" v-on:setPage="setPage($event)" v-on:setPrevPage="setPrevPage()" v-on:setNextPage="setNextPage()" class="text-center"></paginator>
-
  ,
   beforeMount: function () {
     this.data_params = []
     this.instance = this.instance_name
     this.form_fields = appDataset[this.instance]['fields']['form']
-//    this.data_rows_count = 0
   },
   watch: {
     // Спостерігаємо за змінами this.fields і оновлюємо form_fields
-    page: function(newFields, oldFields) {
+    page: function(newValue, oldValue) {
       rows = this.paginatedRows
     },
     form_fields: function(newFields, oldFields) {
       this.form_fields = newFields;
       this.data_params = []
-    }
+    },
+    image_diagram: function(newFields, oldFields) {
+      image_diagram = this.getImageUrl
+    },
 }
 
 })

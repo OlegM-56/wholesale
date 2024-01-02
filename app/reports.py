@@ -96,6 +96,7 @@ class RepBalanceItem:
             data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНА  ВАРТІСТЬ  ЗАЛИШКІВ</b>', 'unit': '<b>грн.</b>', 'balance_item': '',
                          'balance_sum_item': f"<b>{format_number(total_sum_item)}</b>",
                          'balance_pricesum_item': f"<b>{format_number(total_pricesum_item)}</b>"})
+
         return data
 
 
@@ -155,20 +156,18 @@ class RepCirculationItem:
             # залишок товару =  сума приходів - сума видатків
             balance_item = sum_receipt - sum_expense
             data.append({'id': item.id, 'item_name': item.item_name, 'unit': item.unit, 'start_balance_item': 0,
-                         'receipt_item': format_number(sum_receipt), 'expense_item': format_number(sum_expense),
-                         'balance_item': format_number(balance_item)}
+                         'receipt_item': sum_receipt, 'expense_item': sum_expense,
+                         'balance_item': balance_item}
                         )
         return data
 
-    """ ---  Залишки товарів на дату або Оборотна відомість за період ---  
-             параметри звіту: params= {"date_rep":"10-12-2023"} або {"date_start":"10-12-2023", "date_end":"10-12-2023"}  """
-
     @staticmethod
     def get_report(params, orders):
-        """ Отримання звітів: """
-        #  --- Оборотна відомість за період ---
+        """ ---  Оборотна відомість за період ---
+                 параметри звіту: params= {"date_start":"10-12-2023", "date_end":"10-12-2023"}  """
         date_start = params.get('date_start')
         date_end = params.get('date_end')
+        data = []
         if date_start and date_end:
             date_start = datetime.strptime(date_start, '%Y-%m-%d').date()
             date_end = datetime.strptime(date_end, '%Y-%m-%d').date()
@@ -195,9 +194,9 @@ class RepCirculationItem:
                                  'start_balance_item': format_number(item_ends['balance_item']),
                                  'receipt_item': 0, 'expense_item': 0, 'balance_item': format_number(item_ends['balance_item'])}
                                 )
-            return sorted(data, key=lambda x: x['id'])
-        # --- якщо не задано параметрів звіту
-        return []
+            data = sorted(data, key=lambda x: x['id'])
+
+        return data
 
 
 class RepCirculationItemSchema(ma.Schema):
@@ -219,7 +218,7 @@ class RepSaleItem:
     def get_report(params, orders):
         data = []
         total_sales_money = 0
-        # --- 1. Обсяги продажу товарів за період - кількість та сумма грошей
+        # --- Обсяги продажу товарів за період - кількість та сумма грошей
         date_start = params.get('date_start')
         date_end = params.get('date_end')
         if date_start and date_end:
@@ -247,6 +246,7 @@ class RepSaleItem:
         if total_sales_money:
             data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНИЙ ОБСЯГ ПРОДАЖУ</b>', 'unit': '<b>грн.</b>', 'sales_item': '',
                          'sales_money_item': f"<b>{format_number(total_sales_money, 2)}</b>"})
+
         return data
 
 
@@ -260,6 +260,107 @@ class RepSaleItemSchema(ma.Schema):
 # Schema's initializing
 rep_sale_item_schema = RepSaleItemSchema()
 rep_sale_items_schema = RepSaleItemSchema(many=True)
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+from flask import jsonify
+import urllib
+
+class RepSaleGroup:
+    """ =====================  Обсяги продажу за період по групам ========================  """
+
+    @staticmethod
+    def get_circle_diagram(data):
+        """ ===================== Кругова діаграма ================
+        """
+        # --- формуємо дані по queryset та готуємо таблицю розподілу та Діаграму
+        title_rep = 'Продаж по групам'
+
+        # Дані для кругової діаграми
+        labels = []
+        values = []
+        for row in data:
+            labels.append(row['group_name'])
+            values.append(row['sales_money_group'])
+
+        # Очищення попередньої діаграми
+        plt.clf()  # або plt.cla()
+        # Створення об'єкта figure з вказаною шириною та висотою
+        plt.subplots(figsize=(6, 6))
+
+        #   Побудова кругової діаграми
+        plt.pie(values, autopct='%1.0f', startangle=90, counterclock=False)  # autopct='%1.0f%%'
+        #   Встановлення назви діаграми
+        plt.title(title_rep, pad=1)
+        #   Додаткові налаштування
+        plt.axis('equal')  # Забезпечує рівні пропорції вісей для отримання кругової форми
+        #   Виведення таблиці з повними назвами (легенда)
+        plt.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.01))
+        plt.tight_layout()
+
+        # Зберігаємо діаграму у буфер пам'яті
+        buf = BytesIO()
+        plt.savefig(buf, format='png', dpi=100)
+        buf.seek(0)
+        # Кодуємо графік у формат base64
+        encoded_diagram = base64.b64encode(buf.read())
+
+        return encoded_diagram
+
+    @staticmethod
+    def get_report(params, orders):
+        data = []
+        total_sales_money = 0
+        # --- Обсяги продажу за період по групам -сумма грошей
+        date_start = params.get('date_start')
+        date_end = params.get('date_end')
+        if date_start and date_end:
+            # --- Формуємо список проданих товарів за період з date_0(включно) до дати звіту(включно)
+            #     по рядках проведених видаткових накладних
+            sale_items_list = (
+                db.session.query(
+                    Item.group_id, GroupItem.group_name,
+                    func.sum(EinvoiceRow.quantity * EinvoiceRow.price).label('sales_money_group')
+                ).join(Einvoice).join(Item).join(GroupItem).filter(
+                    Einvoice.doc_date_approve >= date_start, Einvoice.doc_date_approve <= date_end, Einvoice.doc_status == 1
+                ).group_by(Item.group_id, GroupItem.group_name).all()
+            )
+            #  --- прохрдимо по всіх отриманих рядках та формуємо звіт
+            for row in sale_items_list:
+                total_sales_money += row.sales_money_group
+                data.append({'id': row.group_id, 'group_name': row.group_name,
+                             'sales_money_group': row.sales_money_group}
+                            )
+        #  сортуємо по id
+        data = sorted(data, key=lambda x: x['sales_money_group'], reverse=True)
+
+        image_diagram = RepSaleGroup.get_circle_diagram(data)
+
+        #  додаємо підсумковий рядок
+        if total_sales_money:
+            data.append({'id': '', 'group_name': '<b>ЗАГАЛЬНИЙ ОБСЯГ ПРОДАЖУ</b>',  'sales_money_group': f"<b>{total_sales_money}</b>"})
+
+        return data, image_diagram
+
+
+class RepSaleGroupSchema(ma.Schema):
+    """ schema """
+
+    class Meta:
+        fields = ('id', 'group_name', 'sales_money_group')
+
+    sales_money_group = fields.Function(
+        serialize=lambda obj: format_number(obj['sales_money_group']) if obj is not None else ''
+    )
+
+
+# Schema's initializing
+rep_sale_sroup_schema = RepSaleGroupSchema()
+rep_sale_sroup_schemas = RepSaleGroupSchema(many=True)
+
 
 
 class ProfitSaleItem:

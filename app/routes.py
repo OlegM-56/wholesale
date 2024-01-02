@@ -384,7 +384,12 @@ def reports(rep_model=None, options=None):
                     orders = options['order']
 
             #  отримання даних звіту
-            data = ReportModels[rep_model]['class'].get_report(params, orders)
+            result = ReportModels[rep_model]['class'].get_report(params, orders)
+            if isinstance(result, tuple):
+                data, image_diagram = result
+            else:
+                data, image_diagram = result, None
+
             if not data:
                 return jsonify({'errors': ["За вказаними параметрами нічого не знайдено!", "Звіт порожній!"]}), 404
             # переводимо в json згідно зі схемою
@@ -393,6 +398,9 @@ def reports(rep_model=None, options=None):
             else:
                 # або без схеми
                 json_data = jsonify(data).json
+            #   додаємо діаграму, якщо вона є
+            if image_diagram:
+                json_data.append({'_image_diagram_': image_diagram.decode('utf-8')})
 
             return json.dumps(json_data)
         except Exception as e:

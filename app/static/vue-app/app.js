@@ -555,6 +555,25 @@ const appDataset = {
     }
   },
 
+  /* ----- Обсяги продажу за період по групам  ------------  */
+  'rep_sale_sroup': {
+    'instance': 'rep_sale_sroup',
+    'url': main_url + 'report/rep_sale_sroup/',
+    'title': 'Обсяги продажу за період по групам',
+    'perpage': 15,
+    'fields': {
+      'table': [
+        {name:'id', 'title':'Код групи', type:'number'},
+        {name:'group_name', 'title': 'Назва групи', type:'string'},
+        {name:'sales_money_group', 'title':'Сума продажу, грн.', type:'string'}
+      ],
+      'form': [
+        {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
+        {name:'date_end', 'title': 'Кінцева дата періоду', type:'mydate', required:'required'}
+      ]
+    }
+  },
+
 }
 
 

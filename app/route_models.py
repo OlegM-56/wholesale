@@ -30,4 +30,4 @@ ReportModels['profit_sale_item'] = {'class': ProfitSaleItem, 'schema': profit_sa
 
 ReportModels['abc_analysis'] = {'class': ABCanalysis, 'schema': abc_analysis_schema, 'schemas': abc_analysis_schemas}
 
-
+ReportModels['rep_sale_sroup'] = {'class': RepSaleGroup, 'schema': rep_sale_sroup_schema, 'schemas': rep_sale_sroup_schemas}
