@@ -20,7 +20,7 @@ Models['balance_item'] = {'class': BalanceItem, 'schema': balance_item_schema, '
 Models['price_list'] = {'class': PriceList, 'schema': price_list, 'schemas': price_lists}
 Models['price_short'] = {'class': PriceList, 'schema': price_short, 'schemas': price_shorts}
 
-""" ---------- Reports list для автоматичного routing ---------- """
+""" ---------- Reports list для автоматичного routing звітів---------- """
 ReportModels = {}
 ReportModels['rep_balance_item'] = {'class': RepBalanceItem, 'schema': rep_balance_item_schema, 'schemas': rep_balance_items_schema}
 ReportModels['rep_circulation_item'] = {'class': RepCirculationItem, 'schema': rep_circulation_item_schema, 'schemas': rep_circulation_items_schema}

@@ -194,6 +194,7 @@ class RepCirculationItem:
                                  'start_balance_item': format_number(item_ends['balance_item']),
                                  'receipt_item': 0, 'expense_item': 0, 'balance_item': format_number(item_ends['balance_item'])}
                                 )
+            # сортуємо по коду товару
             data = sorted(data, key=lambda x: x['id'])
 
         return data
@@ -334,7 +335,7 @@ class RepSaleGroup:
                 data.append({'id': row.group_id, 'group_name': row.group_name,
                              'sales_money_group': row.sales_money_group}
                             )
-        #  сортуємо по id
+        #  сортуємо по Виручка від продажу
         data = sorted(data, key=lambda x: x['sales_money_group'], reverse=True)
 
         image_diagram = RepSaleGroup.get_circle_diagram(data)
