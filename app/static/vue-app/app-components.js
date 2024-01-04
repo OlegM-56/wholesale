@@ -49,29 +49,8 @@ Vue.component('standard-table', {
 `
 })
 
-
+//  Поля для форми
 Vue.component('form-field', {
-  /*
-    password
-    email
-    tel
-    url
-
-    label
-    html
-    string
-    textarea
-    number
-    select
-    checkbox
-    radio
--- MD --
-    date
-    switch
-    autocomplete
-    chips
-    file
-  */
   props:['field', 'value'],
   template: `
 <span>

@@ -1154,6 +1154,7 @@ var report = {
   watch: {
     instance_name() {
       this.data = null
+      this.image_diagram = null
       this.init()
     }
 
