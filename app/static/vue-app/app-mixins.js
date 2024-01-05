@@ -166,10 +166,10 @@ var crud_front = {
                   // -- загальна кількість рядків
                   // get _total_records_ and Remove record with _total_records_ from data
                   this.data_rows_count = this.data.length
-                  if (typeof this.data[this.data.length-1]['_total_records_'] != 'undefined') {
-                    this.data_rows_count = this.data[this.data.length-1]['_total_records_']
-                    this.data = this.data.slice(0, this.data.length-1)
-                  }
+//                  if (typeof this.data[this.data.length-1]['_total_records_'] != 'undefined') {
+//                    this.data_rows_count = this.data[this.data.length-1]['_total_records_']
+//                    this.data = this.data.slice(0, this.data.length-1)
+//                  }
                   /////////
                 }
               }
