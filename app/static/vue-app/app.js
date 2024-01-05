@@ -1,7 +1,6 @@
 "use strict";
 
-const main_url = 'http://localhost:5000/'
-
+const main_url = 'http://olmi254.pythonanywhere.com/'
 
 const loadComponents = function(name) {
   let version = ''
