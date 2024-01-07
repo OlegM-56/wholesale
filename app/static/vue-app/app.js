@@ -106,7 +106,7 @@ const appDataset = {
         {name:'id', 'title': 'Код', type:'number', readonly:true},
         {name:'customer_name', 'title': 'Повна назва', type:'string', placeholder: 'Внесіть повну назву кліента', maxlength: 70, required: true},
         {name:'customer_address', 'title': 'Адреса клієнта', type:'string', placeholder: 'Внесить адресу кліента', maxlength: 100, required: true},
-        {name:'phone', 'title': 'Контактний телефонPhone', type:'string', pattern: '\\(0\\d{2}\\)\\d{3}-\\d{2}-\\d{2}', placeholder: '(099)999-99-99'},
+        {name:'phone', 'title': 'Контактний телефонPhone', type:'string', pattern: '\\(\\d{3}\\)\\d{3}-\\d{2}-\\d{2}', placeholder: '(999)999-99-99'},
       ]
     }
   },
