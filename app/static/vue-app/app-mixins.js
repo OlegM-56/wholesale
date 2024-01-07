@@ -1093,7 +1093,12 @@ var report = {
       this.instance = this.instance_name
       store.commit('title', appDataset[this.instance]['title'])
       this.instance_url = appDataset[this.instance]['url']
-      this.fields = appDataset[this.instance]['fields']['table']
+
+      let fields_rep = {}
+      Object.assign(fields_rep, appDataset[this.instance]['fields']['table'])
+      this.fields = fields_rep
+      //      this.fields = appDataset[this.instance]['fields']['table']
+
       this.data = null
       this.perpage = appDataset[this.instance]['perpage']
       this.page = 1
@@ -1109,10 +1114,12 @@ var report = {
           //  заміна заголовка стовпчика, якщо заданий тип звіту
           if ( this.data_params['type_rep'] !== null ) {
             //  для АВС-звіту
-            if ( this.data_params['type_rep'] == 'profit' ) {
-              this.fields[2]['title'] = 'Прибуток від продажу, грн.'
-            } else {
-              this.fields[2]['title'] = 'Виручка від продажу, грн.'
+            if ( this.data_params && this.data_params['type_rep'] ) {
+                if ( this.data_params['type_rep'] == 'profit' ) {
+                  this.fields[2]['title'] = 'Прибуток від продажу, грн.'
+                } else {
+                  this.fields[2]['title'] = 'Виручка від продажу, грн.'
+                }
             }
           }
           this.data = null
