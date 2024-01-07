@@ -1,12 +1,12 @@
 import re
 
 from flask_marshmallow.fields import fields
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 
 from sqlalchemy import func
 from sqlalchemy.orm import relationship
 
-from . import db, ma
+from . import db, ma, BASE_DIR
 
 import os
 import json
@@ -20,7 +20,8 @@ class Menu:
     class query:
         @staticmethod
         def all():
-            file_json = 'menu.json'
+            print('BASE_DIR=', BASE_DIR)
+            file_json = str(BASE_DIR / "menu.json")
             menu = {}
             if os.path.isfile(file_json):
                 with codecs.open(file_json, 'r', 'utf-8') as file_data:

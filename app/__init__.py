@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 import config
+from config import BASE_DIR
 
 # app = Flask(__name__, static_folder='/app/static')
 app = Flask(__name__)

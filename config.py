@@ -3,6 +3,7 @@ import pathlib
 
 BASE_DIR = pathlib.Path(__file__).parent
 
+
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + str(BASE_DIR / "data" / "trade.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False

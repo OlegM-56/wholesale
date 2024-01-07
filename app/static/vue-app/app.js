@@ -1,6 +1,7 @@
 "use strict";
 
-const main_url = 'http://olmi254.pythonanywhere.com/'
+const main_url = ''
+const perpage_default = 10
 
 const loadComponents = function(name) {
   let version = ''
@@ -95,7 +96,7 @@ const appDataset = {
     'instance': 'client',
     'url': main_url + 'client/',
     'title': 'Контрагенти',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title': 'Код', type:'integer', sort: true},
@@ -106,21 +107,6 @@ const appDataset = {
         {name:'customer_name', 'title': 'Повна назва', type:'string', placeholder: 'Внесіть повну назву кліента', maxlength: 70, required: true},
         {name:'customer_address', 'title': 'Адреса клієнта', type:'string', placeholder: 'Внесить адресу кліента', maxlength: 100, required: true},
         {name:'phone', 'title': 'Контактний телефонPhone', type:'string', pattern: '\\(0\\d{2}\\)\\d{3}-\\d{2}-\\d{2}', placeholder: '(099)999-99-99'},
-/*
-        {name:'email', 'title': 'Email', type:'email', pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'},
-        {name:'password', 'title': 'Password', type:'password'},
-        {name:'photo', 'title': 'Photo', type:'file', accept:'image/*'},
-        {name:'country', 'title': 'Country', type:'select', items:[{value:1, caption:'Ukraine'},{value:2, caption:'USA'},{value:3, caption:'Canada'}]},
-        {name:'address', 'title': 'Address', type:'textarea'},
-        {name:'birthday', 'title': 'Birthday', type:'date'},
-        {name:'married', 'title': 'Married', type:'switch'},
-        {name:'sex', 'title': 'Sex', type:'radio', items:[{value:1, caption:'male'},{value:2, caption:'female'},{value:3, caption:'undefined'}]},
-        {name:'married', 'title': 'Married', type:'checkbox'},
-        {name:'tags', 'title': 'Tags', type:'chips'},
-
-        {name:'price', 'title': 'Price', type:'number', step: 0.01, min:0, required:true},
-        {name:'warehouse', 'title': 'Warehouse', type:'autocomplete', items:[1,2], required:true},
-*/
       ]
     }
   },
@@ -129,7 +115,7 @@ const appDataset = {
   'unit': {
     'instance': 'unit',
     'url': main_url + 'unit/',
-    'perpage': 5,
+    'perpage': perpage_default,
     'title': 'Одиниці виміру',
     'pk': 'unit_code',
     'fields': {
@@ -148,7 +134,7 @@ const appDataset = {
   'group_item': {
     'instance': 'group_item',
     'url': main_url + 'group_item/',
-    'perpage': 10,
+    'perpage': perpage_default,
     'order': '["group_name"]',
     'title': 'Групи товарів (послуг)',
     'fields': {
@@ -169,7 +155,7 @@ const appDataset = {
   'item': {
     'instance': 'item',
     'url': main_url + 'item/',
-    'perpage': 15,
+    'perpage': perpage_default,
     'order': '["item_name"]',
     'title': 'Товари та послуги',
     'fields': {
@@ -196,7 +182,7 @@ const appDataset = {
     'instance': 'price_list',
     'url': main_url + 'price_list/',
     'title': 'Актуальний Прайс-лист товарів та послуг',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title': 'Код рядка', type:'number', sort:true},
@@ -225,7 +211,7 @@ const appDataset = {
     'url': main_url + 'balance_item/',
     'title': 'Поточні залишки по партіях',
     'pk': 'party_id',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'party_id', 'title': 'Код партії', type:'number', sort:true},
@@ -255,7 +241,7 @@ const appDataset = {
     'url': main_url + 'pinvoice/',
     'title': 'Прибуткові накладні',
     'pk': 'num_doc',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'num_doc', 'title': 'Номер документу', type:'number', sort:true},
@@ -292,7 +278,7 @@ const appDataset = {
     'instance': 'pinvoice_row',
     'url': main_url + 'pinvoice_row/',
     'title': 'Рядки прибуткової накладної',
-    'perpage': 4,
+    'perpage': perpage_default,
     'main_id': 'pinvoice_id',
     'order': '["npp"]',
     'fields': {
@@ -325,7 +311,7 @@ const appDataset = {
     'url': main_url + 'einvoice/',
     'title': 'Видаткові накладні',
     'pk': 'num_doc',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'num_doc', 'title': 'Номер документу', type:'number', sort:true},
@@ -362,7 +348,7 @@ const appDataset = {
     'instance': 'einvoice_row',
     'url': main_url + 'einvoice_row/',
     'title': 'Рядки видаткової накладної',
-    'perpage': 4,
+    'perpage': perpage_default,
     'main_id': 'einvoice_id',
     'order': '["npp"]',
     'fields': {
@@ -395,7 +381,7 @@ const appDataset = {
     'url': main_url + 'einvoice/',
     'title': 'Складський ордер до Видаткової накладної',
     'pk': 'num_doc',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'num_doc', 'title': 'Номер документу', type:'number', sort:true},
@@ -428,7 +414,7 @@ const appDataset = {
     'title': 'Рядки Складського ордеру до видаткової накладної',
     'main_id': 'einvoice_id',
     'order': '["einvoice_row_id","id"]',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'npp', 'title':'№ пп рядка накладної', type:'number'},
@@ -448,7 +434,7 @@ const appDataset = {
     'instance': 'rep_balance_item',
     'url': main_url + 'report/rep_balance_item/',
     'title': 'Залишки товарів на дату',
-    'perpage': 10,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},
@@ -469,7 +455,7 @@ const appDataset = {
     'instance': 'rep_circulation_item',
     'url': main_url + 'report/rep_circulation_item/',
     'title': 'Оборотна відомість товарів за період',
-    'perpage': 5,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},
@@ -492,7 +478,7 @@ const appDataset = {
     'instance': 'rep_sale_item',
     'url': main_url + 'report/rep_sale_item/',
     'title': 'Обсяги продажу товарів за період',
-    'perpage': 5,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},
@@ -513,7 +499,7 @@ const appDataset = {
     'instance': 'profit_sale_item',
     'url': main_url + 'report/profit_sale_item/',
     'title': 'Прибуток від продажу за період',
-    'perpage': 15,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number', sort:true},
@@ -536,7 +522,7 @@ const appDataset = {
     'instance': 'profit_sale_item',
     'url': main_url + 'report/abc_analysis/',
     'title': 'ABC-аналіз продажу за період (виручка та прибуток)',
-    'perpage': 15,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title':'Код товару', type:'number'},
@@ -559,7 +545,7 @@ const appDataset = {
     'instance': 'rep_sale_sroup',
     'url': main_url + 'report/rep_sale_sroup/',
     'title': 'Обсяги продажу за період по групам',
-    'perpage': 15,
+    'perpage': perpage_default,
     'fields': {
       'table': [
         {name:'id', 'title':'Код групи', type:'number'},
@@ -814,5 +800,19 @@ const routes = [
   },
 ]
 
+
+        {name:'email', 'title': 'Email', type:'email', pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'},
+        {name:'password', 'title': 'Password', type:'password'},
+        {name:'photo', 'title': 'Photo', type:'file', accept:'image/*'},
+        {name:'country', 'title': 'Country', type:'select', items:[{value:1, caption:'Ukraine'},{value:2, caption:'USA'},{value:3, caption:'Canada'}]},
+        {name:'address', 'title': 'Address', type:'textarea'},
+        {name:'birthday', 'title': 'Birthday', type:'date'},
+        {name:'married', 'title': 'Married', type:'switch'},
+        {name:'sex', 'title': 'Sex', type:'radio', items:[{value:1, caption:'male'},{value:2, caption:'female'},{value:3, caption:'undefined'}]},
+        {name:'married', 'title': 'Married', type:'checkbox'},
+        {name:'tags', 'title': 'Tags', type:'chips'},
+
+        {name:'price', 'title': 'Price', type:'number', step: 0.01, min:0, required:true},
+        {name:'warehouse', 'title': 'Warehouse', type:'autocomplete', items:[1,2], required:true},
 
 */
