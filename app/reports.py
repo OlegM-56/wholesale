@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from .models import *
 
 
@@ -55,7 +57,7 @@ class RepBalanceItem:
         #  масив -- в словник для швидкого пошуку
         price_dict = dict(price_list)
 
-        #  --- прохрдимо по всіх товарах та формуємо звіт
+        #  --- проходимо по всіх товарах та формуємо звіт
         total_sum_item = total_pricesum_item = 0
         for item in item_list:
             # приход
@@ -73,10 +75,11 @@ class RepBalanceItem:
             else:
                 sum_expense, sum_expense_money = expense
 
-            #  якщо руху немає - пропускаємо
-            if sum_receipt == 0 and sum_expense == 0: continue
             # залишок товару =  сума приходів - сума видатків
             balance_item = sum_receipt - sum_expense
+            #  якщо залишок = 0 - пропускаємо
+            if balance_item == 0: continue
+
             #  сума по прайсовій ціні
             price = price_dict.get(item.id, 0)
             balance_pricesum_item = price*balance_item
