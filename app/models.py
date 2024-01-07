@@ -20,7 +20,6 @@ class Menu:
     class query:
         @staticmethod
         def all():
-            print('BASE_DIR=', BASE_DIR)
             file_json = str(BASE_DIR / "menu.json")
             menu = {}
             if os.path.isfile(file_json):
@@ -35,7 +34,7 @@ class StatusDoc:
     class query:
         @staticmethod
         def all():
-            file_json = 'status_doc.json'
+            file_json = str(BASE_DIR / "status_doc.json")
             status_doc = {}
             if os.path.isfile(file_json):
                 with codecs.open(file_json, 'r', 'utf-8') as file_data:
