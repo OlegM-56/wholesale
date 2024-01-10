@@ -5,6 +5,7 @@ from .models import *
 
 class RepBalanceItem:
     """ =====================  Залишки товарів на дату ========================  """
+
     @staticmethod
     def get_report(params, orders):
         """ ---  Залишки товарів на дату ---   параметри звіту: params= {"date_rep":"10-12-2023"}
@@ -27,7 +28,7 @@ class RepBalanceItem:
             db.session.query(
                 PinvoiceRow.item_id,
                 func.sum(PinvoiceRow.quantity).label('sum_quantity'),
-                func.sum(PinvoiceRow.quantity*PinvoiceRow.price).label('sum_money')
+                func.sum(PinvoiceRow.quantity * PinvoiceRow.price).label('sum_money')
             ).join(Pinvoice).filter(
                 Pinvoice.doc_date_approve <= date_rep, Pinvoice.doc_status == 1
             ).group_by(PinvoiceRow.item_id).all()
@@ -82,37 +83,25 @@ class RepBalanceItem:
 
             #  сума по прайсовій ціні
             price = price_dict.get(item.id, 0)
-            balance_pricesum_item = price*balance_item
+            balance_pricesum_item = price * balance_item
             total_pricesum_item += balance_pricesum_item
             #  сума по ціні приходу
             balance_sum_item = sum_receipt_money - sum_expense_money
             total_sum_item += balance_sum_item
 
             data.append({'id': item.id, 'item_name': item.item_name, 'unit': item.unit,
-                         'balance_item': format_number(balance_item),
-                         'balance_sum_item': format_number(balance_sum_item),
-                         'balance_pricesum_item': format_number(balance_pricesum_item)
+                         'balance_item': balance_item,
+                         'balance_sum_item': balance_sum_item,
+                         'balance_pricesum_item': balance_pricesum_item
                          }
                         )
         #  додаємо підсумковий рядок
         if total_sum_item or total_pricesum_item:
             data.append({'id': '', 'item_name': '<b>ЗАГАЛЬНА  ВАРТІСТЬ  ЗАЛИШКІВ</b>', 'unit': '<b>грн.</b>', 'balance_item': '',
-                         'balance_sum_item': f"<b>{format_number(total_sum_item)}</b>",
-                         'balance_pricesum_item': f"<b>{format_number(total_pricesum_item)}</b>"})
+                         'balance_sum_item': f"<b>{format_number(total_sum_item,2)}</b>",
+                         'balance_pricesum_item': f"<b>{format_number(total_pricesum_item,2)}</b>"})
 
         return data
-
-
-class RepBalanceItemSchema(ma.Schema):
-    """ schema """
-
-    class Meta:
-        fields = ('id', 'item_name', 'unit', 'balance_item', 'balance_sum_item', 'balance_pricesum_item')
-
-
-# Schema's initializing
-rep_balance_item_schema = RepBalanceItemSchema()
-rep_balance_items_schema = RepBalanceItemSchema(many=True)
 
 
 class RepCirculationItem:
@@ -194,25 +183,13 @@ class RepCirculationItem:
                 # якщо лишилися початкові залишки - додаємо їх до звіту
                 for key, item_ends in data_items_ends_dict.items():
                     data.append({'id': item_ends['id'], 'item_name': item_ends['item_name'], 'unit': item_ends['unit'],
-                                 'start_balance_item': format_number(item_ends['balance_item']),
-                                 'receipt_item': 0, 'expense_item': 0, 'balance_item': format_number(item_ends['balance_item'])}
+                                 'start_balance_item': item_ends['balance_item'],
+                                 'receipt_item': 0, 'expense_item': 0, 'balance_item': item_ends['balance_item']}
                                 )
             # сортуємо по коду товару
             data = sorted(data, key=lambda x: x['id'])
 
         return data
-
-
-class RepCirculationItemSchema(ma.Schema):
-    """ schema """
-
-    class Meta:
-        fields = ('id', 'item_name', 'unit', 'start_balance_item', 'receipt_item', 'expense_item', 'balance_item')
-
-
-# Schema's initializing
-rep_circulation_item_schema = RepCirculationItemSchema()
-rep_circulation_items_schema = RepCirculationItemSchema(many=True)
 
 
 class RepSaleItem:
@@ -242,7 +219,7 @@ class RepSaleItem:
             for row in sale_items_list:
                 total_sales_money += row.sales_money_item
                 data.append({'id': row.item_id, 'item_name': row.item_name, 'unit': row.unit,
-                             'sales_item': format_number(row.sales_item), 'sales_money_item': format_number(row.sales_money_item, 2)}
+                             'sales_item': row.sales_item, 'sales_money_item': row.sales_money_item}
                             )
         #  сортуємо по id
         data = sorted(data, key=lambda x: x['id'])
@@ -254,24 +231,17 @@ class RepSaleItem:
         return data
 
 
-class RepSaleItemSchema(ma.Schema):
-    """ schema """
-
-    class Meta:
-        fields = ('id', 'item_name', 'unit', 'sales_item', 'sales_money_item')
-
-
-# Schema's initializing
-rep_sale_item_schema = RepSaleItemSchema()
-rep_sale_items_schema = RepSaleItemSchema(many=True)
-
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
-from flask import jsonify
-import urllib
+
+
+# from flask import jsonify
+# import urllib
+
 
 class RepSaleGroup:
     """ =====================  Обсяги продажу за період по групам ========================  """
@@ -345,26 +315,10 @@ class RepSaleGroup:
 
         #  додаємо підсумковий рядок
         if total_sales_money:
-            data.append({'id': '', 'group_name': '<b>ЗАГАЛЬНИЙ ОБСЯГ ПРОДАЖУ</b>',  'sales_money_group': f"<b>{total_sales_money}</b>"})
+            data.append({'id': '', 'group_name': '<b>ЗАГАЛЬНИЙ ОБСЯГ ПРОДАЖУ</b>',
+                         'sales_money_group': f"<b>{format_number(total_sales_money, 2)}</b>"})
 
         return data, image_diagram
-
-
-class RepSaleGroupSchema(ma.Schema):
-    """ schema """
-
-    class Meta:
-        fields = ('id', 'group_name', 'sales_money_group')
-
-    sales_money_group = fields.Function(
-        serialize=lambda obj: format_number(obj['sales_money_group']) if obj is not None else ''
-    )
-
-
-# Schema's initializing
-rep_sale_sroup_schema = RepSaleGroupSchema()
-rep_sale_sroup_schemas = RepSaleGroupSchema(many=True)
-
 
 
 class ProfitSaleItem:
@@ -408,10 +362,10 @@ class ProfitSaleItem:
                 profit_item = item.sales_money_item - purchase_money_item
                 total_profit += profit_item
                 data.append({'id': item.item_id, 'item_name': item.item_name, 'unit': item.unit,
-                             'sales_item': format_number(item.sales_item),
-                             'sales_money_item': format_number(item.sales_money_item, 2),
-                             'purchase_money_item': format_number(purchase_money_item, 2),
-                             'profit_item': format_number(profit_item, 2)}
+                             'sales_item': item.sales_item,
+                             'sales_money_item': item.sales_money_item,
+                             'purchase_money_item': purchase_money_item,
+                             'profit_item': profit_item}
                             )
             #  сортуємо по id
             data = sorted(data, key=lambda x: x['id'])
@@ -423,27 +377,17 @@ class ProfitSaleItem:
         return data
 
 
-class ProfitSaleItemSchema(ma.Schema):
-    """ schema """
-
-    class Meta:
-        fields = ('id', 'item_name', 'unit', 'sales_item', 'sales_money_item', 'purchase_money_item', 'profit_item')
-
-
-# Schema's initializing
-profit_sale_item_schema = ProfitSaleItemSchema()
-profit_sale_items_schema = ProfitSaleItemSchema(many=True)
-
 class ABCanalysis:
     """ ABC-аналіз по Виручці та Прибутку
         Виручка/Прибуток  Питома вага  Накопичена частка  Група
      """
+
     @staticmethod
     def get_report(params, orders):
         data = []
         # --- отримуємо звіт по прибуткам
         data_tmp = ProfitSaleItem.get_report(params, orders)
-        data_tmp.pop()   # видаляємо останній рядок з підсумками
+        data_tmp.pop()  # видаляємо останній рядок з підсумками
         # отримуємо параметр типу звіту
         type_rep = params.get('type_rep', '')
         # --- якщо дані отримані - проводимо ABC-аналіз
@@ -453,8 +397,7 @@ class ABCanalysis:
             #   1. формування масиву даних
             total_amount_indicator = 0
             for row in data_tmp:
-                indicator = row['profit_item'] if type_rep == 'profit' else row['sales_money_item']
-                amount_indicator = float(indicator.replace(' ',''))
+                amount_indicator = row['profit_item'] if type_rep == 'profit' else row['sales_money_item']
                 total_amount_indicator += amount_indicator
                 data.append({'id': row['id'], 'item_name': row['item_name'], 'amount_indicator': amount_indicator})
             #   2. Сортуємо по показнику по спаданню
@@ -489,21 +432,10 @@ class ABCanalysis:
                     else:
                         group = 'C'
                 # додаємо параметри
-                row.update({'percentage': round(percentage, 2), 'cumulative_percentage': round(cumulative_percentage, 2),  'group': group})
+                row.update({'percentage': round(percentage, 2), 'cumulative_percentage': round(cumulative_percentage, 2), 'group': group})
 
         # -----
         return data
-
-
-class ABCanalysisSchema(ma.Schema):
-    """ schema """
-
-    class Meta:
-        fields = ('id', 'item_name', 'amount_indicator',  'percentage', 'cumulative_percentage',  'group')
-
-# Schema's initializing
-abc_analysis_schema = ABCanalysisSchema()
-abc_analysis_schemas = ABCanalysisSchema(many=True)
 
 
 '''

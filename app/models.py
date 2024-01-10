@@ -437,7 +437,7 @@ class PinvoiceRowSchema(ma.Schema):
     )
     amount = fields.Function(
         # рахуемо суму грошей по рядку
-        serialize=lambda obj: format_number(obj.quantity * obj.price if obj is not None else 0, 2),
+        serialize=lambda obj: obj.quantity * obj.price if obj is not None else 0,
         # пропустити суму грошей по рядку
         deserialize=lambda value: None
     )
@@ -578,7 +578,7 @@ class EinvoiceRowSchema(ma.Schema):
     )
     amount = fields.Function(
         # рахуемо суму грошей по рядку
-        serialize=lambda obj: format_number(obj.quantity * obj.price if obj is not None else 0, 2),
+        serialize=lambda obj: obj.quantity * obj.price if obj is not None else 0,
         # пропустити суму грошей по рядку
         deserialize=lambda value: None
     )

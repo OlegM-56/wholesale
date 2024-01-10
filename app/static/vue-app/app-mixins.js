@@ -421,6 +421,9 @@ var paginator_local = {
             function cook (d, type) {
               switch(type) {
                 case 'number':
+                case 'number0':
+                case 'number1':
+                case 'number2':
                   d = parseFloat(d)
                   break
                 case 'float':
@@ -797,6 +800,7 @@ var edit = {
       this.instance = this.instance_name
       store.commit('title', appDataset[this.instance]['title'])
       this.instance_url = appDataset[this.instance]['url']
+      if ( appDataset[this.instance]['instance_parent'] )  this.instance_parent = appDataset[this.instance]['instance_parent'];
       this.field_main_id = appDataset[this.instance]['main_id']
 
       let row = {id: this.ID}
@@ -825,6 +829,8 @@ var edit = {
             this.create_back(this.data, ()=> {
               app.notify({type: 'success', message: 'Запис створено'})
               this.$router.go(-1)
+//              app.navigate('/invoice/'+ this.instance_parent + '/' +this.data.einvoice_id)
+
             }, (errors)=> {
               this.show_error(errors.errors)
             })
@@ -973,7 +979,10 @@ var edit_invoce = {
           if (this.ID == 0) {
             this.create_back(this.data,
             (response)=> {
+              this.data = response
               app.notify({type: 'success', message: 'Документ створено'})
+              //  задаємо pk створеної накладної
+              this.$router.replace('/invoice/'+ this.instance + '/' +  this.data[this.pk]);
             },
             (errors)=> {
               this.show_error(errors.errors)
@@ -985,12 +994,12 @@ var edit_invoce = {
             (response)=> {
               this.data = response
               app.notify({type: 'success', message: 'Зміни в документі збережено'})
+              this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
             },
             (errors)=> {
               this.show_error(errors.errors)
             })
           }
-          this.$router.push('/invoice/'+ this.instance + '/' +this.ID);
         }
         else {
           app.alert('Form is NOT valid!', '<i class="fas fa-times-circle text-danger"></i> Error')

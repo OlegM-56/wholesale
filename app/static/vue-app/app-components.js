@@ -8,10 +8,37 @@ Vue.component('standard-table', {
   mixins:[table],
   methods: {
       formatField(fieldType, value) {
-        if ( fieldType != 'mydate' || !value ) return value;
+        if ( value ) {
+            // формат поля Дата
+            if ( fieldType == 'mydate' ) {
+                let valueDate = new Date(value);
+                return valueDate.toLocaleDateString({ day: 'numeric', month: 'numeric', year: 'numeric' });
+            }
+                //  формат чисел
+            else if ( fieldType.indexOf("number") != -1 && ! isNaN(value) ) {
+                let strValue = ''
+                if (fieldType == 'number2') {
+                    strValue = new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2,}).format(value)
+                }
+                else if (fieldType == 'number1') {
+                    strValue = new Intl.NumberFormat('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1,}).format(value)
+                }
+                else if (fieldType == 'number0') {
+                    strValue = new Intl.NumberFormat('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0,}).format(value)
+                }
+                else {
+                    return value;
+                }
 
-        const valueDate = new Date(value);
-        return valueDate.toLocaleDateString({ day: 'numeric', month: 'numeric', year: 'numeric' });
+                return strValue.replaceAll(/\,/g,' ');
+            } else {
+                //  нічого не робимо
+                return value;
+            }
+        } else {
+           //  нічого не робимо
+           return value;
+        }
       }
   },
   template: `

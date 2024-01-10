@@ -22,12 +22,9 @@ Models['price_short'] = {'class': PriceList, 'schema': price_short, 'schemas': p
 
 """ ---------- Reports list для автоматичного routing звітів---------- """
 ReportModels = {}
-ReportModels['rep_balance_item'] = {'class': RepBalanceItem, 'schema': rep_balance_item_schema, 'schemas': rep_balance_items_schema}
-ReportModels['rep_circulation_item'] = {'class': RepCirculationItem, 'schema': rep_circulation_item_schema, 'schemas': rep_circulation_items_schema}
-
-ReportModels['rep_sale_item'] = {'class': RepSaleItem, 'schema': rep_sale_item_schema, 'schemas': rep_sale_items_schema}
-ReportModels['profit_sale_item'] = {'class': ProfitSaleItem, 'schema': profit_sale_item_schema, 'schemas': profit_sale_items_schema}
-
-ReportModels['abc_analysis'] = {'class': ABCanalysis, 'schema': abc_analysis_schema, 'schemas': abc_analysis_schemas}
-
-ReportModels['rep_sale_sroup'] = {'class': RepSaleGroup, 'schema': rep_sale_sroup_schema, 'schemas': rep_sale_sroup_schemas}
+ReportModels['rep_balance_item'] = {'class': RepBalanceItem}
+ReportModels['rep_circulation_item'] = {'class': RepCirculationItem}
+ReportModels['rep_sale_item'] = {'class': RepSaleItem}
+ReportModels['profit_sale_item'] = {'class': ProfitSaleItem}
+ReportModels['abc_analysis'] = {'class': ABCanalysis}
+ReportModels['rep_sale_sroup'] = {'class': RepSaleGroup}

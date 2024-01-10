@@ -276,6 +276,7 @@ const appDataset = {
   /* ----- рядки Прибуткова накладна ------------  */
   'pinvoice_row': {
     'instance': 'pinvoice_row',
+    'instance_parent': 'pinvoice',
     'url': main_url + 'pinvoice_row/',
     'title': 'Рядки прибуткової накладної',
     'perpage': perpage_default,
@@ -287,9 +288,9 @@ const appDataset = {
         {name:'item_id', 'title':'Код товару', type:'string'},
         {name:'item_name', 'title':'Назва товару', type:'string'},
         {name:'unit', 'title':'Одиниця виміру', type:'string'},
-        {name:'quantity', 'title':'Кількість', type:'number'},
-        {name:'price', 'title':'Ціна', type:'number'},
-        {name:'amount', 'title':'Сума', type:'string', readonly:true},
+        {name:'quantity', 'title':'Кількість', type:'number0'},
+        {name:'price', 'title':'Ціна', type:'number2'},
+        {name:'amount', 'title':'Сума', type:'number2', readonly:true},
       ],
       'form': [
         {name:'id', 'title':'Код рядка', type:'number', readonly:true},
@@ -298,7 +299,7 @@ const appDataset = {
         {name:'item_id', 'title':'Товар', type:'select', dataset:{src: 'item', value:'id', caption:'item_name'}, required:true},
         {name:'quantity', 'title':'Кількість', type:'number', min:0.001, step:0.001, required:true},
         {name:'price', 'title':'Ціна', type:'number', min:0.01, step:0.01, required:true},
-        {name:'amount', 'title':'Сума', type:'string', readonly:true},
+        {name:'amount', 'title':'Сума', type:'number', readonly:true},
       ]
     }
   },
@@ -319,7 +320,7 @@ const appDataset = {
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', sort:true},
         {name:'doc_status_name', 'title': 'Статус', type:'string', sort:true},
         {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate', sort:true},
-        {name:'sum_doc', 'title':'Сума по документу, грн.', type:'number'}
+        {name:'sum_doc', 'title':'Сума по документу, грн.', type:'number2'}
 
       ],
       'form': [
@@ -327,10 +328,9 @@ const appDataset = {
         {name:'customer_id', 'title': 'Отримувач', type:'select', dataset: {src: 'client', value: 'id', caption: 'customer_name'} },
         {name:'doc_date', 'title': 'Дата документу', type:'mydate', required:'required'},
         {name:'doc_status_name', 'title': 'Статус', type:'string', readonly:true},
-      //  {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
         {name:'doc_date_approve', 'title': 'Дата проведення', type:'mydate'},
         {name:'sum_doc', 'title':'Сума по документу, грн.', type:'string', readonly:true}
-
+                    //  {name:'doc_status', 'title': 'Статус', type:'select', dataset: {src: 'status_doc', value: 'id', caption: 'name_status'} },
       ],
       'form_readonly': [
         {name:'num_doc', 'title': 'Номер документу', type:'number', readonly:true},
@@ -346,6 +346,7 @@ const appDataset = {
   /* ----- рядки Видаткової накладної ------------  */
   'einvoice_row': {
     'instance': 'einvoice_row',
+    'instance_parent': 'einvoice',
     'url': main_url + 'einvoice_row/',
     'title': 'Рядки видаткової накладної',
     'perpage': perpage_default,
@@ -357,9 +358,9 @@ const appDataset = {
         {name:'item_id', 'title':'Код товару', type:'string'},
         {name:'item_name', 'title':'Назва товару', type:'string'},
         {name:'unit', 'title':'Одиниця виміру', type:'string'},
-        {name:'quantity', 'title':'Кількість', type:'number'},
-        {name:'price', 'title':'Ціна', type:'number'},
-        {name:'amount', 'title':'Сума', type:'string'}
+        {name:'quantity', 'title':'Кількість', type:'number0'},
+        {name:'price', 'title':'Ціна', type:'number2'},
+        {name:'amount', 'title':'Сума', type:'number2'}
       ],
       'form': [
         {name:'id', 'title':'Код рядка', type:'number', readonly:true},
@@ -368,7 +369,7 @@ const appDataset = {
         {name:'item_id', 'title':'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true, get_price:true},
         {name:'quantity', 'title':'Кількість', type:'number', required:true, min:0.001, step:0.001},
         {name:'price', 'title':'Ціна', type:'number', required:true, min:0.01, step:0.01},
-        {name:'amount', 'title':'Сума', type:'string', readonly:true}
+        {name:'amount', 'title':'Сума', type:'number', readonly:true}
       ]
     }
   },
@@ -440,9 +441,9 @@ const appDataset = {
         {name:'id', 'title':'Код товару', type:'number', sort:true},
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
-        {name:'balance_item', 'title':'Залишок', type:'number', sort:true},
-        {name:'balance_sum_item', 'title':'Залишок по цінам приходу, грн.', type:'string', sort:true},
-        {name:'balance_pricesum_item', 'title':'Залишок по прайсовим цінам, грн.', type:'string', sort:true},
+        {name:'balance_item', 'title':'Залишок', type:'number0', sort:true},
+        {name:'balance_sum_item', 'title':'Залишок по цінам приходу, грн.', type:'number2', sort:true},
+        {name:'balance_pricesum_item', 'title':'Залишок по прайсовим цінам, грн.', type:'number2', sort:true},
       ],
       'form': [
         {name:'date_rep', 'title': 'Залишки на дату', type:'mydate', required:'required'}
@@ -461,10 +462,10 @@ const appDataset = {
         {name:'id', 'title':'Код товару', type:'number', sort:true},
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
-        {name:'start_balance_item', 'title':'Початковий залишок', type:'number'},
-        {name:'receipt_item', 'title':'Надходження', type:'number'},
-        {name:'expense_item', 'title':'Витрата', type:'number'},
-        {name:'balance_item', 'title':'Залишок', type:'number'}
+        {name:'start_balance_item', 'title':'Початковий залишок', type:'number0'},
+        {name:'receipt_item', 'title':'Надходження', type:'number0'},
+        {name:'expense_item', 'title':'Витрата', type:'number0'},
+        {name:'balance_item', 'title':'Залишок', type:'number0'}
       ],
       'form': [
         {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
@@ -484,8 +485,8 @@ const appDataset = {
         {name:'id', 'title':'Код товару', type:'number', sort:true},
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
-        {name:'sales_item', 'title':'Кількість', type:'number', sort:true},
-        {name:'sales_money_item', 'title':'Сума продажу, грн.', type:'number', sort:true}
+        {name:'sales_item', 'title':'Кількість', type:'number0', sort:true},
+        {name:'sales_money_item', 'title':'Сума продажу, грн.', type:'number2', sort:true}
       ],
       'form': [
         {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
@@ -505,10 +506,10 @@ const appDataset = {
         {name:'id', 'title':'Код товару', type:'number', sort:true},
         {name:'item_name', 'title': 'Назва товару', type:'string', sort:true},
         {name:'unit', 'title': 'Одиниця виміру', type:'string'},
-        {name:'sales_item', 'title':'Кількість', type:'number', sort:true},
-        {name:'sales_money_item', 'title':'Виручка від продажу, грн.', type:'number', sort:true},
-        {name:'purchase_money_item', 'title':'Витрати на закупку, грн.', type:'number', sort:true},
-        {name:'profit_item', 'title':'Сума прибуткуу, грн.', type:'number', sort:true}
+        {name:'sales_item', 'title':'Кількість', type:'number0', sort:true},
+        {name:'sales_money_item', 'title':'Виручка від продажу, грн.', type:'number2', sort:true},
+        {name:'purchase_money_item', 'title':'Витрати на закупку, грн.', type:'number2', sort:true},
+        {name:'profit_item', 'title':'Сума прибуткуу, грн.', type:'number2', sort:true}
       ],
       'form': [
         {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
@@ -527,7 +528,7 @@ const appDataset = {
       'table': [
         {name:'id', 'title':'Код товару', type:'number'},
         {name:'item_name', 'title': 'Назва товару', type:'string'},
-        {name:'amount_indicator', 'title':'Виручка від продажу, грн.', type:'string', 'title2': 'Прибуток від продажу, грн.'},
+        {name:'amount_indicator', 'title':'Виручка від продажу, грн.', type:'number2', 'title2': 'Прибуток від продажу, грн.'},
         {name:'percentage', 'title':'Питома вага, %', type:'number'},
         {name:'cumulative_percentage', 'title':'Накопичена частка, %', type:'number'},
         {name:'group', 'title':'Група', type:'string'}
@@ -550,7 +551,7 @@ const appDataset = {
       'table': [
         {name:'id', 'title':'Код групи', type:'number'},
         {name:'group_name', 'title': 'Назва групи', type:'string'},
-        {name:'sales_money_group', 'title':'Сума продажу, грн.', type:'string'}
+        {name:'sales_money_group', 'title':'Сума продажу, грн.', type:'number2'}
       ],
       'form': [
         {name:'date_start', 'title': 'Початкова дата періоду', type:'mydate', required:'required'},
