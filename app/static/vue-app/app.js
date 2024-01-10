@@ -1,7 +1,7 @@
 "use strict";
 
 const main_url = ''
-const perpage_default = 10
+const perpage_default = 12
 
 const loadComponents = function(name) {
   let version = ''
@@ -276,7 +276,7 @@ const appDataset = {
   /* ----- рядки Прибуткова накладна ------------  */
   'pinvoice_row': {
     'instance': 'pinvoice_row',
-    'instance_parent': 'pinvoice',
+//    'instance_parent': 'pinvoice',
     'url': main_url + 'pinvoice_row/',
     'title': 'Рядки прибуткової накладної',
     'perpage': perpage_default,
@@ -346,7 +346,7 @@ const appDataset = {
   /* ----- рядки Видаткової накладної ------------  */
   'einvoice_row': {
     'instance': 'einvoice_row',
-    'instance_parent': 'einvoice',
+//    'instance_parent': 'einvoice',
     'url': main_url + 'einvoice_row/',
     'title': 'Рядки видаткової накладної',
     'perpage': perpage_default,
