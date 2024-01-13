@@ -6,4 +6,5 @@
 /~WRL1271.tmp
 *.xml
 *.iml
+*.db
 /.idea/.gitignore
