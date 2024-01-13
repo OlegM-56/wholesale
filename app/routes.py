@@ -176,95 +176,6 @@ def get_data(model, pk='', options=None):
         return jsonify({'errors': [f"Невідома модель {model}"]})
 
 
-'''
-#-------------------
-def read(self, id=None, data=None):
-    def makeWhere(data=None):
-        result = ''
-        if data != None:
-            if 'search' in data:
-                fieldsList = []
-                for item in data['search']:
-                    # item['operator']  !!! not used yet. Just 'Like' yet
-                    fieldsList.append("CAST({0} as TEXT) LIKE '%{1}%'".format(item['field'], item['value']))
-                separator = ' OR '
-                result = ' WHERE({0})'.format(separator.join(fieldsList))
-        return result
-
-    def makeOrder(data=None):
-        result = ''
-        if data != None:
-            if 'order' in data:
-                separator = ','
-                fieldsList = separator.join(data['order'])
-                result = ' ORDER BY {0}'.format(fieldsList)
-
-        return result
-
-    def makeLimit(data=None):
-        result = ''
-        if data != None:
-            if 'paginator' in data:
-                if 'limit' in data['paginator'] and 'page' in data['paginator']:
-                    limit = data['paginator']['limit']
-                    offset = limit * (data['paginator']['page'] - 1)
-                    result = ' LIMIT {0} OFFSET {1}'.format(limit, offset)
-
-        return result
-
-    cursor = self.connection.cursor()
-    if id == None:
-        try:
-            data = json.loads(data)
-        except Exception:
-            data = None
-
-        record_count = None
-
-        if data != None:
-            if 'paginator' in data:
-                SQL_COUNT_REC = 'SELECT COUNT(*) FROM {0}{1};'.format(self.objName, makeWhere(data))
-                cursor.execute(SQL_COUNT_REC)
-                rows = cursor.fetchone()
-                record_count = {'_total_records_': rows[0]}
-
-            SQL = 'SELECT * FROM {0}{1}{2}{3};'.format(self.objName, makeWhere(data), makeOrder(data), makeLimit(data))
-        else:
-            SQL = 'SELECT * FROM {0};'.format(self.objName)
-
-        cursor.execute(SQL)
-        field_names = list(map(lambda x: x[0], cursor.description))
-        rows = cursor.fetchall()
-        records = []
-        for row in rows:
-            field_i = 0
-            record = {}
-            for field in field_names:
-                record[field] = row[field_i]
-                field_i += 1
-            records.append(record)
-
-        if record_count != None:
-            records.append(record_count)
-
-        return records
-    else:
-        cursor.execute('SELECT * FROM {0} WHERE(id={1});'.format(self.objName, id))
-        field_names = list(map(lambda x: x[0], cursor.description))
-        rows = cursor.fetchall()
-        record = {}
-        for row in rows:
-            field_i = 0
-            for field in field_names:
-                record[field] = row[field_i]
-                field_i += 1
-
-        return record
-
-# -------------
-'''
-
-
 ##############################
 # Update
 ##############################
@@ -462,3 +373,93 @@ def reports(rep_model=None, options=None):
 відображення навігації по сторінках (див. mixin crud_front)
 
 '''
+
+
+'''
+#-------------------
+def read(self, id=None, data=None):
+    def makeWhere(data=None):
+        result = ''
+        if data != None:
+            if 'search' in data:
+                fieldsList = []
+                for item in data['search']:
+                    # item['operator']  !!! not used yet. Just 'Like' yet
+                    fieldsList.append("CAST({0} as TEXT) LIKE '%{1}%'".format(item['field'], item['value']))
+                separator = ' OR '
+                result = ' WHERE({0})'.format(separator.join(fieldsList))
+        return result
+
+    def makeOrder(data=None):
+        result = ''
+        if data != None:
+            if 'order' in data:
+                separator = ','
+                fieldsList = separator.join(data['order'])
+                result = ' ORDER BY {0}'.format(fieldsList)
+
+        return result
+
+    def makeLimit(data=None):
+        result = ''
+        if data != None:
+            if 'paginator' in data:
+                if 'limit' in data['paginator'] and 'page' in data['paginator']:
+                    limit = data['paginator']['limit']
+                    offset = limit * (data['paginator']['page'] - 1)
+                    result = ' LIMIT {0} OFFSET {1}'.format(limit, offset)
+
+        return result
+
+    cursor = self.connection.cursor()
+    if id == None:
+        try:
+            data = json.loads(data)
+        except Exception:
+            data = None
+
+        record_count = None
+
+        if data != None:
+            if 'paginator' in data:
+                SQL_COUNT_REC = 'SELECT COUNT(*) FROM {0}{1};'.format(self.objName, makeWhere(data))
+                cursor.execute(SQL_COUNT_REC)
+                rows = cursor.fetchone()
+                record_count = {'_total_records_': rows[0]}
+
+            SQL = 'SELECT * FROM {0}{1}{2}{3};'.format(self.objName, makeWhere(data), makeOrder(data), makeLimit(data))
+        else:
+            SQL = 'SELECT * FROM {0};'.format(self.objName)
+
+        cursor.execute(SQL)
+        field_names = list(map(lambda x: x[0], cursor.description))
+        rows = cursor.fetchall()
+        records = []
+        for row in rows:
+            field_i = 0
+            record = {}
+            for field in field_names:
+                record[field] = row[field_i]
+                field_i += 1
+            records.append(record)
+
+        if record_count != None:
+            records.append(record_count)
+
+        return records
+    else:
+        cursor.execute('SELECT * FROM {0} WHERE(id={1});'.format(self.objName, id))
+        field_names = list(map(lambda x: x[0], cursor.description))
+        rows = cursor.fetchall()
+        record = {}
+        for row in rows:
+            field_i = 0
+            for field in field_names:
+                record[field] = row[field_i]
+                field_i += 1
+
+        return record
+
+# -------------
+'''
+

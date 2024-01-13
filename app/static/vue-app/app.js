@@ -53,6 +53,12 @@ const routes = [
     component: { template: '<main-page v-if="router.app.componentsReady(`main-page`)" />' },
     beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
   },
+
+  { path: '/task_description',
+    component: { template: '<task_description v-if="router.app.componentsReady(`task_description`)" />' },
+    beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
+  },
+
   { path: '/database',
     component: { template: '<database v-if="router.app.componentsReady(`database`)" />' },
     beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
