@@ -1,10 +1,10 @@
 /_______Vue/
 /___test_task/
 /__old/
+/data/
 /Pipfile.lock
 /~$eateProjectFlask.docx
 /~WRL1271.tmp
 *.xml
 *.iml
-*.db
 /.idea/.gitignore
