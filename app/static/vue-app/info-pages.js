@@ -80,7 +80,7 @@ Vue.component('database', {
   template: `
 <div>
   <h2 class="center-text">Формування бази даних</h2>
-  <h5>Структира бази даних</h5>
+  <h5>Структура бази даних</h5>
   <p>
     <img src="/static/img/BD.svg">
   </p>
