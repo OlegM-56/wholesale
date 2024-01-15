@@ -12,7 +12,6 @@ from sqlalchemy import or_, desc, func, collate
 def serve_index():
     # Використовуємо функцію send_from_directory для відправки файла index.html із каталогу 'static'
     return send_from_directory('static', 'index.html')
-    # return render_template('index.html')
 
 
 ##############################
