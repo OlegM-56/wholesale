@@ -864,7 +864,10 @@ var edit = {
           // запрос ціни з прайса
           let new_price = this.ext_data.price_short.find(obj => obj.item_id == value)
           // міняємо ціну в формі
-          if (new_price && new_price.price)  this.data.price = new_price.price;
+          if (new_price && new_price.price) {
+            this.data.price = new_price.price
+            this.input_additional({'value':this.data.price, 'fieldName':'price'})
+          }
       }
     },
     //  --- Перерахунок суми по рядку накладної при зміні ціни або кількості ---
