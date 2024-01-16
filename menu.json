@@ -89,6 +89,10 @@
             {
               "item": "Опис виконання завдання",
               "path": "#/implementation"
+            },
+            {
+              "item": "Відео-презентація проекту",
+              "path": "#/implementation"
             }
        ]
     }
