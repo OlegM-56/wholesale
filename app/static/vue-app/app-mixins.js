@@ -867,6 +867,20 @@ var edit = {
           if (new_price && new_price.price)  this.data.price = new_price.price;
       }
     },
+    //  --- Перерахунок суми по рядку накладної при зміні ціни або кількості ---
+    input_additional: function ({value, fieldName}) {
+      //  знаходимо обєкт поля
+      let field = this.form_fields.find(obj => obj.name == fieldName)
+      if ( field.calc_amount ) {
+          // рахуємо суму по рядку
+          let new_amount = 0
+          if ( this.data.price && this.data.quantity) {
+            new_amount = this.data.price * this.data.quantity
+          }
+          // міняємо суму в формі
+          this.data.amount = new_amount
+      }
+    },
 
     getRouteParam: function (name) {
       return this.$route.params[name]

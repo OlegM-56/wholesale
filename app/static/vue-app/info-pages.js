@@ -322,3 +322,21 @@ Vue.component('implementation', {
 
 app.componentsLoaded('implementation')
 
+
+Vue.component('video-presentation', {
+  template: `
+<div>
+  <h2 class="center-text">Відео-презентація проекту</h2>
+
+    <video width="320" height="240" controls>
+      <source src="шлях_до_відео.mp4" type="video/mp4">
+      Тег video не підтримується вашим браузером.
+    </video>
+</div>`,
+  mounted: function() {
+    store.commit('title', 'Особливості реалізації задачи')
+  }
+})
+
+app.componentsLoaded('video-presentation')
+

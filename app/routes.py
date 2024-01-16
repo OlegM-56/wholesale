@@ -29,7 +29,7 @@ def create_data(model):
     # Десеріалізуємо дані з JSON згідно схеми
     request_data = Models[model]['schema'].load(data_json)
     #  видаляємо невизначені поля
-    # request_data = {key: value for key, value in request_data.items() if value}
+    request_data = {key: value for key, value in request_data.items() if value is not None}
 
     # створюємо обєкт моделі
     try:

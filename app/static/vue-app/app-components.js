@@ -90,6 +90,9 @@ Vue.component('form-field', {
 
   <select v-if="field.type=='select'" v-model="value" @change="$emit('input', $event.target.value); $emit('change_value', {value: $event.target.value, fieldName: field.name})"
   class="form-control" :readonly="field.readonly" :required="field.required"><option v-for="item in field.items" :value="item.value">{{item.caption}}</option></select>
+
+  <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value); $emit('input_additional', {value: $event.target.value, fieldName: field.name})" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control"
+  v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
   <!-- ----------- -->
 
   <input v-if="field.type=='string'" type="text" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()"
@@ -100,9 +103,10 @@ Vue.component('form-field', {
   <input v-if="field.type=='url'" type="url" class="form-control" :value="value" @input="$emit('input', $event.target.value)" v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern">
 
   <textarea v-if="field.type=='textarea'" :value="value" @input="$emit('input', $event.target.value)" class="form-control" :placeholder="field.placeholder" :maxlength="field.maxlength" :required="field.required" :pattern="field.pattern"></textarea>
+ <!--
   <input v-if="field.type=='number'" :value="value" @input="$emit('input', $event.target.value)" :min="field.min" :max="field.max" :step="field.step" type="number" class="form-control"
   v-on:keyup.enter="keyEnter()" :placeholder="field.placeholder" :readonly="field.readonly">
-
+-->
   <select v-if="field.type=='old_select'" v-model="value" @change="$emit('input', $event.target.value)" class="form-control" :readonly="field.readonly" :required="field.required"><option v-for="item in field.items"
   :value="item.value">{{item.caption}}</option></select>
 
@@ -154,7 +158,7 @@ Vue.component('standard-form', {
     <form name="dataForm" autocomplete="off">
       <div class="form-group" v-for="field in form_fields">
         <label v-if="field.title && (['checkbox','switch','autocomplete','file'].indexOf(field.type)==-1)">{{field.title}}<sup v-if="field.required==true">*</sup></label>
-        <form-field :field=field v-model="data[field.name]" :value=data[field.name] @keyEnter="submitForm(dataForm.checkValidity())" @change_value="change_value" />
+        <form-field :field=field v-model="data[field.name]" :value=data[field.name] @keyEnter="submitForm(dataForm.checkValidity())" @change_value="change_value" @input_additional="input_additional" />
         <small v-if="field.help" class="form-text text-muted">{{field.help}}</small>
       </div>
       <div class="form-group">
@@ -181,10 +185,15 @@ methods: {
   },
   //  передача події в батьківський компонент
   change_value: function ({value, fieldName}){
-      this.$emit('change_value', {'value': value, 'fieldName': fieldName})
+      if ( fieldName ) {
+        this.$emit('change_value', {'value': value, 'fieldName': fieldName})
+      }
+  },
+  input_additional: function ({value, fieldName}){
+      if ( fieldName ) {
+        this.$emit('input_additional', {'value': value, 'fieldName': fieldName})
+      }
   }
-
-
 }
 })
 
@@ -252,7 +261,7 @@ Vue.component('instance-edit', {
       ]"
       @action="doAction($event)"
       @change_value="change_value"
-      @input="change_value"
+      @input_additional="input_additional"
     />
   </div>
 </div>`

@@ -303,8 +303,8 @@ const appDataset = {
         {name:'pinvoice_id', 'title':'Код накладної', type:'number', readonly:true},
         {name:'npp', 'title': '№ пп', type:'number', readonly:true},
         {name:'item_id', 'title':'Товар', type:'select', dataset:{src: 'item', value:'id', caption:'item_name'}, required:true},
-        {name:'quantity', 'title':'Кількість', type:'number', min:0.001, step:0.001, required:true},
-        {name:'price', 'title':'Ціна', type:'number', min:0.01, step:0.01, required:true},
+        {name:'quantity', 'title':'Кількість', type:'number', min:0.001, step:0.001, required:true, calc_amount:true},
+        {name:'price', 'title':'Ціна', type:'number', min:0.01, step:0.01, required:true, calc_amount:true},
         {name:'amount', 'title':'Сума', type:'number', readonly:true},
       ]
     }
@@ -373,8 +373,8 @@ const appDataset = {
         {name:'einvoice_id', 'title':'Код накладної', type:'number', readonly:true},
         {name:'npp', 'title':'№ пп', type:'number', readonly:true},
         {name:'item_id', 'title':'Товар', type:'select', dataset: {src: 'item', value: 'id', caption: 'item_name'}, required:true, get_price:true},
-        {name:'quantity', 'title':'Кількість', type:'number', required:true, min:0.001, step:0.001},
-        {name:'price', 'title':'Ціна', type:'number', required:true, min:0.01, step:0.01},
+        {name:'quantity', 'title':'Кількість', type:'number', required:true, min:0.001, step:0.001, calc_amount:true},
+        {name:'price', 'title':'Ціна', type:'number', required:true, min:0.01, step:0.01, calc_amount:true},
         {name:'amount', 'title':'Сума', type:'number', readonly:true}
       ]
     }
