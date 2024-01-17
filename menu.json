@@ -74,7 +74,6 @@
         ]
     },
 
-
     {
     "section": "Інформація",
        "items": [
@@ -92,7 +91,7 @@
             },
             {
               "item": "Відео-презентація проекту",
-              "path": "#/implementation"
+              "path": "#/video-presentation"
             }
        ]
     }

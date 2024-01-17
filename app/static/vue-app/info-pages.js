@@ -328,13 +328,13 @@ Vue.component('video-presentation', {
 <div>
   <h2 class="center-text">Відео-презентація проекту</h2>
 
-    <video width="320" height="240" controls>
-      <source src="шлях_до_відео.mp4" type="video/mp4">
-      Тег video не підтримується вашим браузером.
+    <video controls>
+      <source src="/static/img/presentation.mp4" type="video/mp4">
+      Тег <b>video</b> не підтримується вашим браузером.
     </video>
 </div>`,
   mounted: function() {
-    store.commit('title', 'Особливості реалізації задачи')
+    store.commit('title', 'Презентація проекту')
   }
 })
 
