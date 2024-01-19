@@ -96,7 +96,7 @@ def format_number(num_value, digit=0):
 
 # ===================  ДОВІДНИКИ ==================
 class Customer(db.Model):
-    """ --- Клієнти ---"""
+    """ --- Контрагенти ---"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     customer_name = db.Column(db.String(70), nullable=False)
     customer_address = db.Column(db.String(100), nullable=False)
