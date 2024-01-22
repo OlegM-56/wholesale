@@ -265,6 +265,9 @@ Vue.component('implementation', {
     <br><br>
     Обмін інформацією з Frontend здійснюється в форматі JSON. Для цього використовується <b>flask_marshmallow</b>.
     <br>Моделі Даних мають схеми, які визначають правила серилізації та десеріалізації даних.<br>
+    <p>
+    Програмний код Backend розміщений на <a href='https://github.com/OlegM-56/wholesale/tree/master/app' target='_blank'>GITHUB у публічному доступі</a>
+    </p>
   </p>
 
   <h3>Frontend</h3>
@@ -315,6 +318,9 @@ Vue.component('implementation', {
       <li><b>crud_front</b> - отримує результати запитів від 'crud', відповідає за обробку та передачу даних в інші компоненти для візуалізації
     </ul>
     Такий підхід дає змогу при зміні Backend обмежитися коригуванням тільки компоненту 'crud'. Це дозволяє отримати більш універсальний додаток.
+    <p>
+    Програмний код Frontend розміщений на <a href='https://github.com/OlegM-56/wholesale/tree/master/app/static/vue-app' target='_blank'>GITHUB у публічному доступі</a>
+    </p>
   </p>
 </div>`,
   mounted: function() {
