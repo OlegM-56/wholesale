@@ -1185,6 +1185,12 @@ var report = {
     instance_name() {
       this.data = null
       this.image_diagram = null
+
+      this.page = 1
+      this.search = ''
+      this.sortedRows = ''
+      this.orderField = ''
+
       this.init()
     }
 
