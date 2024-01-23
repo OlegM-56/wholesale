@@ -199,11 +199,11 @@ methods: {
 
 // ===================================== Таблиця-перелік записів обраної моделі ===============================
 Vue.component('instance-page', {
-  mixins: [crud, crud_front, crud_ext, paginator_server /*, paginator_local*/],
+  mixins: [crud, crud_front, crud_ext, paginator_server],
   template: `
 <div>
   <div v-if="data">
-    <button @click="addRow()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Create</button>
+    <button @click="addRow()" class="btn btn-outline-primary float-right mb-1"><i class="fas fa-plus-square"></i> Додати</button>
 
     <table-menu
       :sorting="sortFields"

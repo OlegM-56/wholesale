@@ -800,7 +800,6 @@ var edit = {
       this.instance = this.instance_name
       store.commit('title', appDataset[this.instance]['title'])
       this.instance_url = appDataset[this.instance]['url']
-      if ( appDataset[this.instance]['instance_parent'] )  this.instance_parent = appDataset[this.instance]['instance_parent'];
       this.field_main_id = appDataset[this.instance]['main_id']
 
       let row = {id: this.ID}
@@ -829,8 +828,6 @@ var edit = {
             this.create_back(this.data, ()=> {
               app.notify({type: 'success', message: 'Запис створено'})
               this.$router.go(-1)
-//              app.navigate('/invoice/'+ this.instance_parent + '/' +this.data.einvoice_id)
-
             }, (errors)=> {
               this.show_error(errors.errors)
             })
