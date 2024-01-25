@@ -14,6 +14,12 @@ Vue.component('main-page', {
    Розробник:  Олег МИХАЙЛИК<br>
    e-mail:  mihaylik@gmail.com
   </p>
+  <p>
+    Програмний код Backend розміщений на <a href='https://github.com/OlegM-56/wholesale/tree/master/app' target='_blank'>GITHUB у публічному доступі</a>
+  </p>
+  <p>
+    Програмний код Frontend розміщений на <a href='https://github.com/OlegM-56/wholesale/tree/master/app/static/vue-app' target='_blank'>GITHUB у публічному доступі</a>
+  </p>
 </div>`,
   mounted: function() {
     store.commit('title', 'Головна сторінка')
@@ -331,13 +337,12 @@ Vue.component('implementation', {
 app.componentsLoaded('implementation')
 
 
-Vue.component('video-presentation', {
+Vue.component('video_presentation_1', {
   template: `
 <div>
-  <h2 class="center-text">Відео-презентація проекту</h2>
-
+  <h2 class="center-text">Відео-презентація проекту. Опис проекту</h2>
     <video controls>
-      <source src="/static/img/presentation.mp4" type="video/mp4">
+      <source src="/static/img/project_description.mp4" type="video/mp4">
       Тег <b>video</b> не підтримується вашим браузером.
     </video>
 </div>`,
@@ -346,5 +351,20 @@ Vue.component('video-presentation', {
   }
 })
 
-app.componentsLoaded('video-presentation')
+app.componentsLoaded('video_presentation_1')
 
+Vue.component('video_presentation_2', {
+  template: `
+<div>
+  <h2 class="center-text">Відео-презентація проекту. Демонстрація роботи</h2>
+    <video controls>
+      <source src="/static/img/work_demonstration.mp4" type="video/mp4">
+      Тег <b>video</b> не підтримується вашим браузером.
+    </video>
+</div>`,
+  mounted: function() {
+    store.commit('title', 'Презентація проекту')
+  }
+})
+
+app.componentsLoaded('video_presentation_2')

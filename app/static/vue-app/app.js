@@ -67,8 +67,12 @@ const routes = [
     component: { template: '<implementation v-if="router.app.componentsReady(`implementation`)" />' },
     beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
   },
-  { path: '/video-presentation',
-    component: { template: '<video-presentation v-if="router.app.componentsReady(`video-presentation`)" />' },
+  { path: '/video_presentation_1',
+    component: { template: '<video_presentation_1 v-if="router.app.componentsReady(`video_presentation_1`)" />' },
+    beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
+  },
+  { path: '/video_presentation_2',
+    component: { template: '<video_presentation_2 v-if="router.app.componentsReady(`video_presentation_2`)" />' },
     beforeEnter (to, from, next) { loadComponents("info-pages.js"); next() }
   },
 

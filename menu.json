@@ -90,8 +90,12 @@
               "path": "#/implementation"
             },
             {
-              "item": "Відео-презентація проекту",
-              "path": "#/video-presentation"
+              "item": "Відео-презентація: Опис проекту",
+              "path": "#/video_presentation_1"
+            },
+            {
+              "item": "Відео-презентація: Демонстрація роботи",
+              "path": "#/video_presentation_2"
             }
        ]
     }
